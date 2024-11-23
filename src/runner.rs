@@ -56,17 +56,32 @@ impl RunnerClient {
     ) -> Result<Scenario, Box<dyn Error>> {
         #[derive(Deserialize)]
         struct InitializeScenarioResponse {
-            message: String,
-            scenario: Scenario,
+            message: Option<String>,
+            error: Option<String>,
+            scenario: Option<Scenario>,
         }
 
         let resp: InitializeScenarioResponse = self
-            .post(
-                &format!("/Scenarios/initialize_scenario/{}", db_scenario_id),
-                &(),
-            )
+            .client
+            .post(&format!(
+                "{}/Scenarios/initialize_scenario?db_scenario_id={}",
+                self.base_url, db_scenario_id
+            ))
+            .header("Content-Type", "application/json")
+            .body("{}")
+            .send()
+            .await?
+            .json()
             .await?;
-        Ok(resp.scenario)
+
+        if let Some(scenario) = resp.scenario {
+            return Ok(scenario)
+        }
+
+        return Err(match resp.error {
+            Some(e) => e,
+            None => "No error from backend, but also no scenario, lol".to_string()
+        }.into());
     }
 
     /// Assigns vehicles to customers.

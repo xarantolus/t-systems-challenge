@@ -16,10 +16,10 @@ pub struct Scenario {
 #[serde(rename_all = "camelCase")]
 pub struct Customer {
     pub id: String,
-    pub coord_x: i64,
-    pub coord_y: i64,
-    pub destination_x: i64,
-    pub destination_y: i64,
+    pub coord_x: f64,
+    pub coord_y: f64,
+    pub destination_x: f64,
+    pub destination_y: f64,
     pub awaiting_service: bool,
 }
 
@@ -27,14 +27,14 @@ pub struct Customer {
 #[serde(rename_all = "camelCase")]
 pub struct Vehicle {
     pub id: String,
-    pub coord_x: i64,
-    pub coord_y: i64,
+    pub coord_x: f64,
+    pub coord_y: f64,
     pub is_available: bool,
-    pub vehicle_speed: i64,
-    pub customer_id: String,
-    pub remaining_travel_time: i64,
-    pub distance_travelled: i64,
-    pub active_time: i64,
+    pub vehicle_speed: Option<f64>,
+    pub customer_id: Option<String>,
+    pub remaining_travel_time: f64,
+    pub distance_travelled: f64,
+    pub active_time: f64,
     pub number_of_trips: i64,
 }
 
