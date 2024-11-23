@@ -8,7 +8,7 @@ export default {
   },
   setup(props) {
     const uuid = ref('');
-    const speed = ref('');
+    const speed = ref(0.2);
     const creating = ref(false);
     const numCars = ref(1);
     const numCustomers = ref(1);
