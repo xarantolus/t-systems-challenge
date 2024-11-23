@@ -4,6 +4,7 @@ import {ref} from "vue";
 import FrontPage from "./components/FrontPage.vue";
 import Map from "./components/Map.vue";
 import InteractiveBoard from "./components/InteractiveBoard.vue";
+import CurrentLoad from "./components/graph/CurrentLoad.vue";
 
 const error = ref('');
 
@@ -35,6 +36,7 @@ function start(uuid: string) {
   <div class="main-container" v-else>
     <div class="left">
       <InteractiveBoard/>
+      <CurrentLoad/>
     </div>
 
     <div class="right">

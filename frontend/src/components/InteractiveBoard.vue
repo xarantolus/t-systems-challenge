@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import FilterDD from "./Dropdowns/FilterDD.vue";
-import ConditionDD from "./Dropdowns/ConditionDD.vue";
+import FilterDD from "./dropdowns/FilterDD.vue";
+import ConditionDD from "./dropdowns/ConditionDD.vue";
 </script>
 
 <template>
