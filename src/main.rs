@@ -41,20 +41,42 @@ pub fn update_scenario_first(scenario: &Scenario) -> UpdateScenario {
     // For each non-assigned vehicle, we assign the next available customer
     let mut vehicle_assignments: Vec<UpdateVehicle> = Vec::new();
 
-    let relevant_customers = scenario
-        .customers
-        .iter()
-        .filter(|customer| customer.awaiting_service);
-    let relevant_vehicles = scenario
+    let (available_vehicles, unavailable_vehicles): (Vec<_>, Vec<_>) = scenario
         .vehicles
         .iter()
-        .filter(|vehicle| vehicle.is_available && vehicle.customer_id.is_none());
+        .partition(|vehicle| vehicle.customer_id.is_none());
 
-    for (customer, vehicle) in relevant_customers.zip(relevant_vehicles) {
+    let riding_customer_id_set = unavailable_vehicles
+        .iter()
+        .filter_map(|v| v.customer_id.clone())
+        .collect::<std::collections::HashSet<_>>();
+
+    let mut used_vehicle_ids = unavailable_vehicles
+        .iter()
+        .map(|v| v.id.clone())
+        .collect::<std::collections::HashSet<_>>();
+
+    for customer in scenario.customers.iter() {
+        if riding_customer_id_set.contains(&customer.id) {
+            continue;
+        }
+
+        let vehicle = available_vehicles
+            .iter()
+            .filter(|v| !used_vehicle_ids.contains(&v.id))
+            .min_by_key(|v| {
+                let dx = v.coord_x - customer.coord_x;
+                let dy = v.coord_y - customer.coord_y;
+                (dx * dx + dy * dy).to_bits()
+            })
+            .unwrap();
+
         vehicle_assignments.push(UpdateVehicle {
             id: vehicle.id.clone(),
-            customer_id: customer.id.clone(),
+            customer_id: vehicle.customer_id.clone().unwrap_or(customer.id.clone()),
         });
+
+        used_vehicle_ids.insert(vehicle.id.clone());
     }
 
     UpdateScenario {
@@ -169,7 +191,7 @@ pub(crate) async fn handle_connection(
         scenario_simulator(
             runner_client,
             initial_scenario_clone,
-            params.speed.unwrap_or(5f64),
+            params.speed.unwrap_or(0.2f64),
             ws_writer_clone,
         )
         .await
