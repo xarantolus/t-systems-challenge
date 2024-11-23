@@ -7,11 +7,8 @@ import InteractiveBoard from "./components/InteractiveBoard.vue";
 
 const error = ref('');
 
-
 let cars = ref([]);
-
 let customers = ref([]);
-
 let connected = ref(false);
 let ws: WebSocket | null;
 
