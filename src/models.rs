@@ -18,8 +18,8 @@ pub struct Customer {
     pub id: String,
     pub coord_x: f64,
     pub coord_y: f64,
-    pub destination_x: f64,
-    pub destination_y: f64,
+    pub destination_x: Option<f64>,
+    pub destination_y: Option<f64>,
     pub awaiting_service: bool,
 }
 

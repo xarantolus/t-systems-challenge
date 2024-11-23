@@ -27,6 +27,7 @@ use warp::{
 #[derive(Debug, serde::Deserialize)]
 pub(crate) struct WebSocketParams {
     scenario_id: String,
+    speed: Option<f64>
 }
 #[derive(Debug, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -64,6 +65,7 @@ pub fn update_scenario_first(scenario: &Scenario) -> UpdateScenario {
 pub(crate) async fn scenario_simulator(
     runner_client: RunnerClient,
     initial_scenario: Scenario,
+    speed: f64,
     ws_sender: UnboundedSender<Message>,
 ) -> Result<(), Box<dyn Error>> {
     let scenario_id = initial_scenario.id.clone();
@@ -79,7 +81,7 @@ pub(crate) async fn scenario_simulator(
     // );
     // debug_assert!(update.failed_to_update.is_empty());
 
-    let scenario_launch = match runner_client.launch_scenario(&scenario_id, 0.2).await {
+    let scenario_launch = match runner_client.launch_scenario(&scenario_id, speed).await {
         Ok(s) => s,
         Err(e) => {
             return Err(format!("Failed to launch scenario: {}", e).into());
@@ -163,7 +165,7 @@ pub(crate) async fn handle_connection(
                 .expect("json serialization failed in initial write"),
         );
 
-        scenario_simulator(runner_client, initial_scenario_clone, ws_writer_clone)
+        scenario_simulator(runner_client, initial_scenario_clone, params.speed.unwrap_or(1f64), ws_writer_clone)
             .await
             .expect("Failed to run scenario simulation")
     });
