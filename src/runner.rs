@@ -14,13 +14,13 @@ impl RunnerClient {
     pub fn new(runner_server_base_url: &str) -> Self {
         RunnerClient {
             client: Client::new(),
-            base_url: runner_server_base_url.to_string(),
+            base_url: runner_server_base_url.trim_end_matches('/').to_string(),
         }
     }
 
     async fn get<T: for<'de> Deserialize<'de>>(&self, endpoint: &str) -> Result<T, Box<dyn Error>> {
         let url = format!("{}/{}", self.base_url, endpoint);
-        let response = self.client.get(&url).send().await?.json::<T>().await?;
+        let response = self.client.get(&url).send().await?            .error_for_status()?.json::<T>().await?;
         Ok(response)
     }
 
@@ -36,6 +36,7 @@ impl RunnerClient {
             .json(body)
             .send()
             .await?
+            .error_for_status()?
             .json::<R>()
             .await?;
         Ok(response)
@@ -53,6 +54,7 @@ impl RunnerClient {
             .json(body)
             .send()
             .await?
+            .error_for_status()?
             .json::<R>()
             .await?;
         Ok(response)
@@ -88,6 +90,7 @@ impl RunnerClient {
             .body("{}")
             .send()
             .await?
+                        .error_for_status()?
             .json()
             .await?;
 
@@ -104,17 +107,26 @@ impl RunnerClient {
 
     /// Assigns vehicles to customers.
     /// Recommendation: fail if failed_to_update is not empty
-    pub async fn update_scenario(
+        pub async fn update_scenario(
         &self,
         scenario_id: &str,
         update_vehicles: &UpdateScenario,
     ) -> Result<UpdateScenarioResponse, Box<dyn Error>> {
-        let scenario: UpdateScenarioResponse = self
+        let response = self
+            .client
             .put(
-                &format!("/Scenarios/update_scenario/{}", scenario_id),
-                update_vehicles,
+                &format!("{}/Scenarios/update_scenario/{}", self.base_url, scenario_id),
             )
+            .header("Content-Type", "application/json")
+            .body(serde_json::to_string(update_vehicles)?)
+            .send()
             .await?;
+
+        let response_text = response.text().await?;
+        println!("Response text: {}", response_text);
+
+        let scenario: UpdateScenarioResponse = serde_json::from_str(&response_text)?;
+
         Ok(scenario)
     }
 
@@ -132,6 +144,7 @@ impl RunnerClient {
             ))
             .send()
             .await?
+            .error_for_status()?
             .text()
             .await?;
 

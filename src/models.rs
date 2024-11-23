@@ -48,7 +48,7 @@ pub struct UpdateScenario {
 #[serde(rename_all = "camelCase")]
 pub struct UpdateVehicle {
     pub id: String,
-    pub customer_id: Vec<String>,
+    pub customer_id: String,
 }
 
 #[derive(Serialize, Deserialize)]
