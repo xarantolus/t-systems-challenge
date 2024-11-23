@@ -1,22 +1,25 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 
-// Declare a reactive variable for dropdown state (active/inactive)
 const isActive = ref(false);
 
-// Reactive variable to track the active item text
 const activeItem = ref<string | null>(null);
 
-// Function to toggle the dropdown visibility
 function toggleDropdown() {
   isActive.value = !isActive.value;
 }
 
-// Function to handle item clicks
+function resetDrops() {
+  isActive.value = false;
+  activeItem.value = null;
+}
+
+defineExpose({
+  resetDrops
+});
+
 function handleItemClick(text: string) {
-  // Set the clicked item text as active
   activeItem.value = text;
-  // Close the dropdown by setting isActive to false
   isActive.value = false;
 }
 </script>
@@ -39,38 +42,23 @@ function handleItemClick(text: string) {
         <a
             href="#"
             class="dropdown-item"
-            :class="{ 'is-active': activeItem === 'Dropdown item' }"
-            @click.prevent="handleItemClick('Dropdown item')">
-          Dropdown item
+            :class="{ 'is-active': activeItem === 'Least CO2 impact' }"
+            @click.prevent="handleItemClick('Least CO2 impact')">
+          Least CO2 impact
         </a>
         <a
             href="#"
             class="dropdown-item"
-            :class="{ 'is-active': activeItem === 'Other dropdown item' }"
-            @click.prevent="handleItemClick('Other dropdown item')">
-          Other dropdown item
+            :class="{ 'is-active': activeItem === 'Shortest distance' }"
+            @click.prevent="handleItemClick('Shortest distance')">
+          Shortest distance
         </a>
         <a
             href="#"
             class="dropdown-item"
-            :class="{ 'is-active': activeItem === 'Active dropdown item' }"
-            @click.prevent="handleItemClick('Active dropdown item')">
-          Active dropdown item
-        </a>
-        <a
-            href="#"
-            class="dropdown-item"
-            :class="{ 'is-active': activeItem === 'Other dropdown item 2' }"
-            @click.prevent="handleItemClick('Other dropdown item 2')">
-          Other dropdown item 2
-        </a>
-        <hr class="dropdown-divider" />
-        <a
-            href="#"
-            class="dropdown-item"
-            :class="{ 'is-active': activeItem === 'With a divider' }"
-            @click.prevent="handleItemClick('With a divider')">
-          With a divider
+            :class="{ 'is-active': activeItem === 'Shortest travel time' }"
+            @click.prevent="handleItemClick('Shortest travel time')">
+          Shortest travel time
         </a>
       </div>
     </div>

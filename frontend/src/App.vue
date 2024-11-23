@@ -48,26 +48,22 @@ const getError = () => error;
 </template>
 
 <style scoped>
-/* Main layout container */
 .main-container {
-  display: flex; /* Enables horizontal layout */
-  width: 100vw; /* Takes full screen width */
-  height: 100vh; /* Takes full screen height */
+  display: flex;
+  width: 100vw;
+  height: 100vh;
 }
 
-/* Left section styling */
 .left {
-  flex: 50%; /* Left section takes remaining space */
+  flex: 50%;
 }
 
-/* Right section styling */
 .right {
-  flex: 50%; /* Takes exactly half of the screen width */
-  border-radius: 15px; /* Add rounded corners */
-  overflow: hidden; /* Ensure content doesn't spill over the rounded corners */
+  flex: 50%;
+  border-radius: 15px;
+  overflow: hidden;
 }
 
-/* Error message styling */
 #error {
   color: red;
 }
