@@ -20,7 +20,14 @@ impl RunnerClient {
 
     async fn get<T: for<'de> Deserialize<'de>>(&self, endpoint: &str) -> Result<T, Box<dyn Error>> {
         let url = format!("{}/{}", self.base_url, endpoint);
-        let response = self.client.get(&url).send().await?            .error_for_status()?.json::<T>().await?;
+        let response = self
+            .client
+            .get(&url)
+            .send()
+            .await?
+            .error_for_status()?
+            .json::<T>()
+            .await?;
         Ok(response)
     }
 
@@ -90,7 +97,7 @@ impl RunnerClient {
             .body("{}")
             .send()
             .await?
-                        .error_for_status()?
+            .error_for_status()?
             .json()
             .await?;
 
@@ -114,9 +121,10 @@ impl RunnerClient {
     ) -> Result<UpdateScenarioResponse, Box<dyn Error>> {
         let scenario: UpdateScenarioResponse = self
             .client
-            .put(
-                &format!("{}/Scenarios/update_scenario/{}", self.base_url, scenario_id),
-            )
+            .put(&format!(
+                "{}/Scenarios/update_scenario/{}",
+                self.base_url, scenario_id
+            ))
             .header("Content-Type", "application/json")
             .body(serde_json::to_string(update_vehicles)?)
             .send()
