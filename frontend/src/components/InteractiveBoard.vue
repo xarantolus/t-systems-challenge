@@ -14,11 +14,6 @@ const resetDropdowns = () => {
   <nav class="panel">
     <p class="panel-heading" style="background-color: #e12885; color: white">Filters and Conditions</p>
 
-    <div class="dropdown-container" style="padding: 20px">
-      <FilterDD style="padding: 10px" ref="filterRef"/>
-      <ConditionDD style="padding: 10px" ref="conditionRef"/>
-    </div>
-
     <div class="panel-block">
       <button class="button is-link is-outlined is-fullwidth" style="color: #e12885; border-color: #e12885" @click="resetDropdowns">
         Reset all filters

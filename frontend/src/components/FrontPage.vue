@@ -1,7 +1,11 @@
 <script lang="ts">
 import {ref} from "vue";
+import ConditionDD from "./dropdowns/ConditionDD.vue";
+import FilterDD from "./dropdowns/FilterDD.vue";
+import AlgorythmDD from "./dropdowns/AlgorythmDD.vue";
 
 export default {
+  components: {AlgorythmDD, FilterDD, ConditionDD},
   props: {
     start: Function,
     error: Function,
@@ -52,9 +56,12 @@ export default {
     <!-- Set Speed box centered at the top -->
     <div class="top-box">
       <div class="box">
-        <h3 class="title is-3">Set Speed</h3>
+        <h3 class="title is-3">Set Speed And Algorythm</h3>
         <div class="input-button-container">
           <input class="input is-rounded" type="number" placeholder="Speed" v-model="speed" />
+        </div>
+        <div class="dropdown-container" style="padding: 20px">
+          <AlgorythmDD style="padding: 10px" ref="conditionRef"/>
         </div>
       </div>
     </div>
@@ -154,7 +161,7 @@ export default {
   min-height: 200px;
   border: 1px solid #ddd;
   border-radius: 8px;
-  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   flex: 1;
 }
 
