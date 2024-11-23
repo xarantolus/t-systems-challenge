@@ -1,14 +1,21 @@
+mod models;
+
 use std::net::SocketAddr;
 
 use env_logger::Env;
 use futures_util::{SinkExt, StreamExt};
 use log::{error, info};
-use tokio::sync::mpsc;
-use warp::{filters::ws::WebSocket, reply::Reply, Filter};
+use models::Scenario;
+use tokio::sync::mpsc::{self, UnboundedSender};
+use warp::{filters::ws::{Message, WebSocket}, reply::Reply, Filter};
 
 #[derive(Debug, serde::Deserialize)]
 pub(crate) struct WebSocketParams {
     scenario_id: String,
+}
+
+pub(crate) async fn scenario_simulator(scenario: &Scenario, ws_sender: UnboundedSender<Message>) {
+
 }
 
 pub(crate) async fn handle_connection(ws: WebSocket, params: WebSocketParams) {
@@ -34,6 +41,9 @@ pub(crate) async fn handle_connection(ws: WebSocket, params: WebSocketParams) {
     tokio::spawn(async move {
         // TODO: some initial messages for setup
         // let _ = ws_writer_clone.send(message);
+
+        // TODO: Start the scenario simulation
+        // scenario_simulator(ws_writer_clone).await;
     });
 
     log::info!(
