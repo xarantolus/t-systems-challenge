@@ -36,7 +36,7 @@ pub fn update_scenario_first(scenario: &Scenario) -> UpdateScenario {
     let relevant_vehicles = scenario
         .vehicles
         .iter()
-        .filter(|vehicle| vehicle.is_available);
+        .filter(|vehicle| vehicle.is_available && vehicle.customer_id.is_none());
 
     for (customer, vehicle) in relevant_customers.zip(relevant_vehicles) {
         vehicle_assignments.push(UpdateVehicle {
