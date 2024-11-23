@@ -11,7 +11,10 @@ use log::{error, info};
 use models::{Scenario, UpdateScenario, UpdateVehicle};
 use runner::RunnerClient;
 use serde::Serialize;
-use tokio::sync::mpsc::{self, UnboundedSender};
+use tokio::{
+    sync::mpsc::{self, UnboundedSender},
+    time::sleep,
+};
 use warp::{
     filters::ws::{Message, WebSocket},
     reject::Rejection,
@@ -58,6 +61,20 @@ pub(crate) async fn scenario_simulator(
     let scenario_id = initial_scenario.id.clone();
     let mut scenario = initial_scenario;
 
+    let initial_assignments = update_scenario_first(&scenario);
+    let update = runner_client
+        .update_scenario(&scenario_id, &initial_assignments)
+        .await?;
+    debug_assert!(
+        initial_assignments.vehicles.len()
+            <= min(scenario.vehicles.len(), scenario.customers.len())
+    );
+    debug_assert!(update.failed_to_update.is_empty());
+
+    let Ok(_) = runner_client.launch_scenario(&scenario_id, 0.2).await else {
+        return Err("Failed to launch scenario".into());
+    };
+
     while scenario.end_time.is_none() {
         let assignments = update_scenario_first(&scenario);
         let update = runner_client
@@ -89,9 +106,12 @@ pub(crate) async fn scenario_simulator(
 
         scenario = runner_client.get_scenario(&scenario_id).await?;
 
-        ws_sender
-            .send((&scenario).try_into()?)
-            .expect("sending to websocket should work")
+        let Ok(_) = ws_sender.send((&scenario).try_into()?) else {
+            return Err("WebSocket disconnected".into());
+        };
+
+        // TODO: Maybe not?
+        sleep(std::time::Duration::from_millis(100)).await;
     }
 
     Ok(())

@@ -127,8 +127,8 @@ impl RunnerClient {
         let response = self
             .client
             .post(&format!(
-                "/Runner/launch_scenario/{}?speed={}",
-                scenario_id, speed
+                "{}/Runner/launch_scenario/{}?speed={}",
+                self.base_url, scenario_id, speed
             ))
             .send()
             .await?
