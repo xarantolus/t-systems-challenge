@@ -1,4 +1,4 @@
-mod matching;
+pub mod matching;
 mod models;
 mod runner;
 
