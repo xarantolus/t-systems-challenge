@@ -32,10 +32,10 @@ pub struct Vehicle {
     pub is_available: bool,
     pub vehicle_speed: Option<f64>,
     pub customer_id: Option<String>,
-    pub remaining_travel_time: f64,
-    pub distance_travelled: f64,
-    pub active_time: f64,
-    pub number_of_trips: i64,
+    pub remaining_travel_time: Option<f64>,
+    pub distance_travelled: Option<f64>,
+    pub active_time: Option<f64>,
+    pub number_of_trips: Option<i64>,
 }
 
 #[derive(Serialize, Deserialize)]

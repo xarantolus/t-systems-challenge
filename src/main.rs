@@ -27,7 +27,7 @@ use warp::{
 #[derive(Debug, serde::Deserialize)]
 pub(crate) struct WebSocketParams {
     scenario_id: String,
-    speed: Option<f64>
+    speed: Option<f64>,
 }
 #[derive(Debug, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -165,9 +165,14 @@ pub(crate) async fn handle_connection(
                 .expect("json serialization failed in initial write"),
         );
 
-        scenario_simulator(runner_client, initial_scenario_clone, params.speed.unwrap_or(1f64), ws_writer_clone)
-            .await
-            .expect("Failed to run scenario simulation")
+        scenario_simulator(
+            runner_client,
+            initial_scenario_clone,
+            params.speed.unwrap_or(1f64),
+            ws_writer_clone,
+        )
+        .await
+        .expect("Failed to run scenario simulation")
     });
 
     log::info!(

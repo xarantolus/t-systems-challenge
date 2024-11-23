@@ -9,6 +9,9 @@ export default defineConfig({
       '/ws': {
         target: 'ws://localhost:5000',
         ws: true
+      },
+      '/scenario/create': {
+        target: 'http://localhost:5000/scenario/create'
       }
     }
   }

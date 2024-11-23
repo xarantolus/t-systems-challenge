@@ -41,20 +41,26 @@ impl BackendClient {
             .await?;
         Ok(response)
     }
-
     pub async fn create_scenario(
         &self,
         num_vehicles: u64,
         num_customers: u64,
     ) -> Result<Scenario, Box<dyn Error>> {
-        Ok(self
-            .post(
-                &format!(
-                    "scenario/create?numberOfVehicles={}&numberOfCustomers={}",
-                    num_vehicles, num_customers
-                ),
-                &(),
-            )
-            .await?)
+        let response = self
+            .client
+            .post(&format!(
+                "{}/scenario/create?numberOfVehicles={}&numberOfCustomers={}",
+                self.base_url, num_vehicles, num_customers
+            ))
+            .send()
+            .await?;
+
+        // Print the response body
+        let response_body = response.text().await?;
+        println!("Response body: {}", response_body);
+
+        // Parse the response body into a Scenario
+        let scenario: Scenario = serde_json::from_str(&response_body)?;
+        Ok(scenario)
     }
 }
