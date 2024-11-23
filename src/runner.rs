@@ -107,25 +107,22 @@ impl RunnerClient {
 
     /// Assigns vehicles to customers.
     /// Recommendation: fail if failed_to_update is not empty
-        pub async fn update_scenario(
+    pub async fn update_scenario(
         &self,
         scenario_id: &str,
         update_vehicles: &UpdateScenario,
     ) -> Result<UpdateScenarioResponse, Box<dyn Error>> {
-        let response = self
+        let scenario: UpdateScenarioResponse = self
             .client
             .put(
                 &format!("{}/Scenarios/update_scenario/{}", self.base_url, scenario_id),
             )
-            .header("Content-Type", "application/json")
             .body(serde_json::to_string(update_vehicles)?)
             .send()
+            .await?
+            .error_for_status()?
+            .json()
             .await?;
-
-        let response_text = response.text().await?;
-        println!("Response text: {}", response_text);
-
-        let scenario: UpdateScenarioResponse = serde_json::from_str(&response_text)?;
 
         Ok(scenario)
     }
