@@ -1,22 +1,11 @@
 <script setup lang="ts">
-import FilterDD from "./dropdowns/FilterDD.vue";
-import ConditionDD from "./dropdowns/ConditionDD.vue";
+
 </script>
 
 <template>
   <nav class="panel">
-    <p class="panel-heading" style="background-color: #e12885; color: white">Filters and Conditions</p>
+    <p class="panel-heading" style="background-color: #e12885; color: white">Stats And Analytics</p>
 
-    <div class="dropdown-container" style="padding: 20px">
-      <FilterDD style="padding: 10px"/>
-      <ConditionDD style="padding: 10px"/>
-    </div>
-
-    <div class="panel-block">
-      <button class="button is-link is-outlined is-fullwidth" style="color: #e12885; border-color: #e12885">
-        Reset all filters
-      </button>
-    </div>
   </nav>
   <!-- Container to center dropdowns -->
 </template>

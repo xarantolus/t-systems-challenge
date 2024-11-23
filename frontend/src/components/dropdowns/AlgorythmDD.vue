@@ -29,7 +29,7 @@ function handleItemClick(text: string) {
     <!-- Dropdown Trigger -->
     <div class="dropdown-trigger">
       <button class="button" aria-haspopup="true" aria-controls="dropdown-menu" @click="toggleDropdown">
-        <span>{{ activeItem ? activeItem : 'Dropdown button' }}</span>
+        <span>{{ activeItem ? activeItem : 'Select algorythm' }}</span>
         <span class="icon is-small">
           <i class="fas fa-angle-down" aria-hidden="true"></i>
         </span>
@@ -56,9 +56,9 @@ function handleItemClick(text: string) {
         <a
             href="#"
             class="dropdown-item"
-            :class="{ 'is-active': activeItem === 'Shortest travel time' }"
-            @click.prevent="handleItemClick('Shortest travel time')">
-          Shortest travel time
+            :class="{ 'is-active': activeItem === 'Shortest time' }"
+            @click.prevent="handleItemClick('Shortest time')">
+          Shortest time
         </a>
       </div>
     </div>
@@ -66,6 +66,5 @@ function handleItemClick(text: string) {
 </template>
 
 <style scoped>
-/* Add any custom styles here if needed */
-</style>
 
+</style>

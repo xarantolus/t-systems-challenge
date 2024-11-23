@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 
+const props = defineProps({
+  isActive: Boolean
+})
+
 // Declare a reactive variable for dropdown state (active/inactive)
 const isActive = ref(false);
 
@@ -11,6 +15,15 @@ const activeItem = ref<string | null>(null);
 function toggleDropdown() {
   isActive.value = !isActive.value;
 }
+
+function resetDrops() {
+  isActive.value = false;
+  activeItem.value = null;
+}
+
+defineExpose({
+  resetDrops
+});
 
 // Function to handle item clicks
 function handleItemClick(text: string) {

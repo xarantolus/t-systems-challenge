@@ -9,14 +9,14 @@ import CurrentLoad from "./components/graph/CurrentLoad.vue";
 const error = ref('');
 
 let cars = ref([
-  {coordX: 40.7128, coordY: -74.0060, id: 'car1'}
+  {coordX: 40.7128, coordY: -74.0060, id: 'car1', customerId: "abc"}
 ]);
 let customers = ref([]);
 let connected = ref(false);
 let ws: WebSocket | null;
 
-function start(uuid: string) {
-  ws = new WebSocket("/ws?scenario_id=" + uuid);
+function start(uuid: string, speed: string) {
+  ws = new WebSocket("/ws?scenario_id=" + uuid + "&speed=" + speed);
   ws.onerror = (event) => {
     console.log(event);
     error.value = "Websocket failed, see console";
@@ -34,40 +34,50 @@ const getError = () => error;
 
 <template>
   <div id="error" v-if="!connected && error">{{ error }}</div>
-  <FrontPage :start :error="getError" v-if="!connected"/>
+  <FrontPage :start="start" :error="getError" v-if="!connected" />
   <div class="main-container" v-else>
     <div class="left">
-      <InteractiveBoard/>
-      <CurrentLoad/>
+      <div class="interactive-board-container">
+        <InteractiveBoard />
+      </div>
+      <div class="current-load-container">
+        <CurrentLoad />
+      </div>
     </div>
 
     <div class="right">
-      <Map :cars :customers/>
+      <Map :cars="cars" :customers="customers" />
     </div>
   </div>
 </template>
 
 <style scoped>
-/* Main layout container */
 .main-container {
-  display: flex; /* Enables horizontal layout */
-  width: 100vw; /* Takes full screen width */
-  height: 100vh; /* Takes full screen height */
+  display: flex;
+  width: 100vw;
+  height: 100vh;
 }
 
-/* Left section styling */
 .left {
-  flex: 50%; /* Left section takes remaining space */
+  flex: 50%;
+  display: flex;
+  flex-direction: column;
 }
 
-/* Right section styling */
+.interactive-board-container {
+  flex: 1;
+}
+
+.current-load-container {
+  flex: 1;
+}
+
 .right {
-  flex: 50%; /* Takes exactly half of the screen width */
-  border-radius: 15px; /* Add rounded corners */
-  overflow: hidden; /* Ensure content doesn't spill over the rounded corners */
+  flex: 50%;
+  border-radius: 15px;
+  overflow: hidden;
 }
 
-/* Error message styling */
 #error {
   color: red;
 }

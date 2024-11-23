@@ -1,7 +1,6 @@
 use std::error::Error;
 
 use reqwest::Client;
-use serde::{Deserialize, Serialize};
 
 use crate::models::Scenario;
 
@@ -19,36 +18,6 @@ impl BackendClient {
         }
     }
 
-    async fn get<T: for<'de> Deserialize<'de>>(&self, endpoint: &str) -> Result<T, Box<dyn Error>> {
-        let url = format!("{}/{}", self.base_url, endpoint);
-        let response = self
-            .client
-            .get(&url)
-            .send()
-            .await?
-            .error_for_status()?
-            .json::<T>()
-            .await?;
-        Ok(response)
-    }
-
-    async fn post<B: Serialize, R: for<'de> Deserialize<'de>>(
-        &self,
-        endpoint: &str,
-        body: &B,
-    ) -> Result<R, Box<dyn Error>> {
-        let url = format!("{}/{}", self.base_url, endpoint);
-        let response = self
-            .client
-            .post(&url)
-            .json(body)
-            .send()
-            .await?
-            .error_for_status()?
-            .json::<R>()
-            .await?;
-        Ok(response)
-    }
     pub async fn create_scenario(
         &self,
         num_vehicles: u64,

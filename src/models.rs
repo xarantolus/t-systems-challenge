@@ -23,7 +23,7 @@ pub struct Customer {
     pub awaiting_service: bool,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Vehicle {
     pub id: String,
@@ -38,13 +38,13 @@ pub struct Vehicle {
     pub number_of_trips: Option<i64>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateScenario {
     pub vehicles: Vec<UpdateVehicle>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateVehicle {
     pub id: String,
@@ -74,11 +74,5 @@ impl TryFrom<&Scenario> for Message {
 
     fn try_from(scenario: &Scenario) -> Result<Self, Self::Error> {
         Ok(Message::text(serde_json::to_string(&scenario)?))
-    }
-}
-
-impl Scenario {
-    pub fn merge(&mut self, update: &UpdateScenarioResponse) {
-        // TODO: Implement merging
     }
 }

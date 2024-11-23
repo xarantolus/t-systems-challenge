@@ -1,6 +1,7 @@
-use reqwest::Client;
-use serde::{Deserialize, Serialize};
 use std::error::Error;
+
+use reqwest::Client;
+use serde::Deserialize;
 
 use crate::models::{LaunchScenarioResponse, Scenario, UpdateScenario, UpdateScenarioResponse};
 
@@ -27,42 +28,6 @@ impl RunnerClient {
             .await?
             .error_for_status()?
             .json::<T>()
-            .await?;
-        Ok(response)
-    }
-
-    async fn post<B: Serialize, R: for<'de> Deserialize<'de>>(
-        &self,
-        endpoint: &str,
-        body: &B,
-    ) -> Result<R, Box<dyn Error>> {
-        let url = format!("{}/{}", self.base_url, endpoint);
-        let response = self
-            .client
-            .post(&url)
-            .json(body)
-            .send()
-            .await?
-            .error_for_status()?
-            .json::<R>()
-            .await?;
-        Ok(response)
-    }
-
-    async fn put<B: Serialize, R: for<'de> Deserialize<'de>>(
-        &self,
-        endpoint: &str,
-        body: &B,
-    ) -> Result<R, Box<dyn Error>> {
-        let url = format!("{}/{}", self.base_url, endpoint);
-        let response = self
-            .client
-            .put(&url)
-            .json(body)
-            .send()
-            .await?
-            .error_for_status()?
-            .json::<R>()
             .await?;
         Ok(response)
     }
@@ -105,11 +70,10 @@ impl RunnerClient {
             return Ok(scenario);
         }
 
-        return Err(match resp.error {
-            Some(e) => e,
-            None => "No error from backend, but also no scenario, lol".to_string(),
-        }
-        .into());
+        return Err(resp
+            .error
+            .unwrap_or_else(|| "No error from backend, but also no scenario, lol".to_string())
+            .into());
     }
 
     /// Assigns vehicles to customers.
