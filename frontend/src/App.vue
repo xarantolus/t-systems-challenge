@@ -9,7 +9,7 @@ import CurrentLoad from "./components/graph/CurrentLoad.vue";
 const error = ref('');
 
 let cars = ref([
-  {coordX: 40.7128, coordY: -74.0060, id: 'car1'}
+  {coordX: 40.7128, coordY: -74.0060, id: 'car1', customerId: "abc"}
 ]);
 let customers = ref([]);
 let connected = ref(false);
