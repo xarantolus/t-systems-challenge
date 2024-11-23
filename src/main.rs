@@ -23,7 +23,7 @@ pub(crate) struct WebSocketParams {
     scenario_id: String,
 }
 
-pub(crate) async fn scenario_simulator(scenario: &Scenario, ws_sender: UnboundedSender<Message>) {
+pub(crate) async fn scenario_simulator(scenario: Scenario, ws_sender: UnboundedSender<Message>) {
     // First of all
 }
 
@@ -51,7 +51,7 @@ pub(crate) async fn handle_connection(
 
     // Initial message writing
     let ws_writer_clone = websocket_writer.clone();
-
+    let initial_scenario_clone = initial_scenario.clone();
     tokio::spawn(async move {
         // TODO: some initial messages for setup
         let _ = ws_writer_clone.send(
@@ -61,7 +61,7 @@ pub(crate) async fn handle_connection(
         );
 
         // TODO: Start the scenario simulation
-        // scenario_simulator(ws_writer_clone).await;
+        scenario_simulator(initial_scenario_clone, ws_writer_clone).await;
     });
 
     log::info!(
@@ -132,7 +132,7 @@ async fn main() {
         .expect("PORT env variable must be a number");
 
     let runner_base_url =
-        std::env::var("RUNNER_BASE_URL").unwrap_or("http://localhost:8090/".to_string());
+        std::env::var("RUNNER_BASE_URL").unwrap_or("http://localhost:8090".to_string());
     let runner_client = RunnerClient::new(&runner_base_url);
 
     let ws_route = warp::path("ws")
