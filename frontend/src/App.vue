@@ -34,15 +34,19 @@ const getError = () => error;
 
 <template>
   <div id="error" v-if="!connected && error">{{ error }}</div>
-  <FrontPage :start :error="getError" v-if="!connected"/>
+  <FrontPage :start="start" :error="getError" v-if="connected" />
   <div class="main-container" v-else>
     <div class="left">
-      <InteractiveBoard/>
-      <CurrentLoad/>
+      <div class="interactive-board-container">
+        <InteractiveBoard />
+      </div>
+      <div class="current-load-container">
+        <CurrentLoad />
+      </div>
     </div>
 
     <div class="right">
-      <Map :cars :customers/>
+      <Map :cars="cars" :customers="customers" />
     </div>
   </div>
 </template>
@@ -56,6 +60,16 @@ const getError = () => error;
 
 .left {
   flex: 50%;
+  display: flex;
+  flex-direction: column;
+}
+
+.interactive-board-container {
+  flex: 1;
+}
+
+.current-load-container {
+  flex: 1;
 }
 
 .right {
