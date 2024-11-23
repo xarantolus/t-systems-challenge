@@ -16,7 +16,7 @@ pub(crate) struct WebSocketParams {
 }
 
 pub(crate) async fn scenario_simulator(scenario: &Scenario, ws_sender: UnboundedSender<Message>) {
-
+    // First of all
 }
 
 pub(crate) async fn handle_connection(ws: WebSocket, params: WebSocketParams) {

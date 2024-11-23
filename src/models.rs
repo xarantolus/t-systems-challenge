@@ -4,8 +4,8 @@ use serde::{Serialize, Deserialize};
 #[serde(rename_all = "camelCase")]
 pub struct Scenario {
     pub id: String,
-    pub start_time: String,
-    pub end_time: String,
+    pub start_time: Option<String>,
+    pub end_time: Option<String>,
     pub status: String,
     pub vehicles: Vec<Vehicle>,
     pub customers: Vec<Customer>,
@@ -49,3 +49,21 @@ pub struct UpdateVehicle {
     id: String,
     customer_id: String,
 }
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateScenarioResponse {
+    failed_to_update: Vec<String>,
+    updated_vehicles: Vec<Vehicle>,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LaunchScenarioResponse {
+    pub message: String,
+    pub scenario_id: String,
+    pub start_time: String,
+}
+
+
+
