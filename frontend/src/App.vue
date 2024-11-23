@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import { ref } from "vue";
+import {ref} from "vue";
 import Map from "./components/Map.vue";
 import InteractiveBoard from "./components/InteractiveBoard.vue";
 
@@ -24,17 +24,12 @@ function start() {
 
 <template>
   <div class="main-container">
-    <!-- Left Side -->
     <div class="left">
-      <InteractiveBoard />
+      <InteractiveBoard/>
     </div>
 
-    <!-- Separator -->
-    <div class="separator"></div>
-
-    <!-- Right Side -->
     <div class="right">
-      <Map />
+      <Map/>
     </div>
   </div>
 </template>
@@ -49,30 +44,16 @@ function start() {
 
 /* Left section styling */
 .left {
-  flex-basis: 50%; /* Left section takes remaining space */
-  overflow: auto; /* Ensures scrollable content if necessary */
-  padding: 1rem;
-}
-
-/* Separator between sections */
-.separator {
-  width: 2px; /* Set the thickness of the separator */
-  background-color: #ccc; /* Light gray separator */
-  height: 100%; /* Full height separator */
+  flex: 50%; /* Left section takes remaining space */
 }
 
 /* Right section styling */
 .right {
-  flex-basis: 50%; /* Takes exactly half of the screen width */
-  background-color: #f9f9f9; /* Optional background color */
-  padding: 1rem;
-  box-sizing: border-box; /* Ensures padding doesn't add to the width */
+  flex: 50%; /* Takes exactly half of the screen width */
 }
 
 /* Error message styling */
 #error {
   color: red;
 }
-
-@import "https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css";
 </style>
