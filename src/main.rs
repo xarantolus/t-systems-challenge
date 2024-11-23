@@ -82,8 +82,8 @@ pub fn update_scenario_first(scenario: &Scenario) -> UpdateScenario {
                 let dx = v.coord_x - customer.coord_x;
                 let dy = v.coord_y - customer.coord_y;
                 (dx * dx + dy * dy).abs() as u64
-            })
-            .unwrap();
+            });
+        let Some(vehicle) = vehicle else { break; };
 
         vehicle_assignments.push(UpdateVehicle {
             id: vehicle.id.clone(),
