@@ -8,13 +8,10 @@ use warp::{filters::ws::WebSocket, reply::Reply, Filter};
 
 #[derive(Debug, serde::Deserialize)]
 pub(crate) struct WebSocketParams {
-    scenario_id: String
+    scenario_id: String,
 }
 
-pub(crate) async fn handle_connection(
-    ws: WebSocket,
-    params: WebSocketParams,
-) {
+pub(crate) async fn handle_connection(ws: WebSocket, params: WebSocketParams) {
     let (mut user_ws_tx, mut user_ws_rx) = ws.split();
     let (websocket_writer, mut websocket_outbound_stream) = mpsc::unbounded_channel();
 
@@ -40,7 +37,8 @@ pub(crate) async fn handle_connection(
     });
 
     log::info!(
-        "Connected WebSocket connection for scenario id {}", params.scenario_id,
+        "Connected WebSocket connection for scenario id {}",
+        params.scenario_id,
     );
 
     // Every time we get a message from the user, handle it with the handler.
@@ -56,21 +54,16 @@ pub(crate) async fn handle_connection(
         }
     }
 
-
-info!(
-        "WebSocket connection closed for scenario id {}", params.scenario_id,
+    info!(
+        "WebSocket connection closed for scenario id {}",
+        params.scenario_id,
     );
 }
 
-pub(crate) fn handle_ws_route(
-    device_info: WebSocketParams,
-    ws: warp::ws::Ws,
-) -> impl Reply {
+pub(crate) fn handle_ws_route(device_info: WebSocketParams, ws: warp::ws::Ws) -> impl Reply {
     // TODO: Set up / calculate the given scenario
 
-    ws.on_upgrade(move |socket| {
-        handle_connection(socket, device_info)
-    })
+    ws.on_upgrade(move |socket| handle_connection(socket, device_info))
 }
 
 #[tokio::main]
