@@ -8,7 +8,7 @@ use futures_util::{SinkExt, StreamExt};
 use log::{error, info};
 use models::Scenario;
 use runner::RunnerClient;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use tokio::sync::mpsc::{self, UnboundedSender};
 use warp::{
     filters::ws::{Message, WebSocket},
@@ -53,7 +53,11 @@ pub(crate) async fn handle_connection(
 
     tokio::spawn(async move {
         // TODO: some initial messages for setup
-        // let _ = ws_writer_clone.send(message);
+        let _ = ws_writer_clone.send(
+            initial_scenario
+                .try_into()
+                .expect("json serialization failed in initial write"),
+        );
 
         // TODO: Start the scenario simulation
         // scenario_simulator(ws_writer_clone).await;
@@ -94,6 +98,7 @@ pub(crate) async fn handle_ws_route(
     runner_client: RunnerClient,
     ws: warp::ws::Ws,
 ) -> Result<impl Reply, Rejection> {
+    // Import the scenario from the database into the scenario runner simulation
     let initial_scenario = match runner_client.initialize_scenario(&params.scenario_id).await {
         Ok(s) => s,
         Err(e) => {

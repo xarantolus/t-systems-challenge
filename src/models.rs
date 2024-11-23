@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use warp::filters::ws::Message;
 
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -63,4 +64,13 @@ pub struct LaunchScenarioResponse {
     pub message: String,
     pub scenario_id: String,
     pub start_time: String,
+}
+
+// Allows sending a scenario as text via the WebSocket connection
+impl TryFrom<Scenario> for Message {
+    type Error = anyhow::Error;
+
+    fn try_from(scenario: Scenario) -> Result<Self, Self::Error> {
+        Ok(Message::text(serde_json::to_string(&scenario)?))
+    }
 }
