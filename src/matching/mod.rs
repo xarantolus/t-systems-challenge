@@ -1,6 +1,8 @@
 mod time_functions;
 mod cost_functions;
 pub mod metric;
+
+use rand::{thread_rng, Rng};
 use crate::models::{Customer, Scenario, UpdateScenario, UpdateVehicle, Vehicle};
 use crate::matching::cost_functions::StraightLineDistance;
 use crate::matching::metric::Metric;
@@ -16,17 +18,47 @@ pub fn compute_assignment(scenario:&Scenario) -> UpdateScenario {
     let v:Vec<Vehicle> = scenario.vehicles.iter().filter(|x| x.is_available).map(|x| x.to_owned()).collect();
     let c:Vec<Customer> = scenario.customers.iter().filter(|x| x.awaiting_service).map(|x| x.to_owned()).collect();
     let initial = construct_initial_solution(&v,&c);
+    let optimal = optimize_alns(initial,0.95);
     let mut updates = UpdateScenario{
         vehicles: vec![],
     };
     for (idx,vehicle) in v.iter().enumerate(){
         let update = UpdateVehicle{
             id: vehicle.id.clone(),
-            customer_id: initial.route.get(idx).unwrap().iter().map(|x| x.id.to_owned()).collect(),
+            customer_id: optimal.route.get(idx).unwrap().iter().map(|x| x.id.to_owned()).collect(),
         };
         updates.vehicles.push(update);
     }
     updates
+}
+
+
+fn optimize_alns(initial: Solution, cooling_factor: f64,max_iterations:i32) -> Solution {
+    const REMOVAL_FACTOR: f64 =0.2;
+    let insert_weights = vec![1.0, 1.0, 1.0, 1.0];
+    let remove_weights = vec![1.0, 1.0, 1.0];
+    let requests=initial.route.iter().map(|x|{x.len()}).sum();
+    let q = requests*REMOVAL_FACTOR;
+    for i in (0..max_iterations) {
+        let removal = select_heuristic(&remove_weights);
+        for j in (0..q) {
+            
+        }
+    }
+
+
+    initial
+}
+
+fn select_heuristic(weights: &Vec<f64>) -> usize {
+    let sum=weights.iter().sum();
+    let mut random = thread_rng().gen_range(0.0..sum);
+    let mut selected:i32 =-1;
+    while random>0.0 {
+        selected += 1;
+        random = random-weights.get(selected).unwrap();
+    }
+    selected as usize
 }
 
 fn construct_initial_solution(vehicles:&Vec<Vehicle>, customers:&Vec<Customer>) -> Solution{
