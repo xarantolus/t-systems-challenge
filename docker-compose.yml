@@ -33,13 +33,13 @@ services:
     depends_on:
       - backend
 
-  our_server:
-    build: .
-    ports:
-      - "5000:5000"
-    restart: always
-    depends_on:
-      - backend
+  # our_server:
+  #   build: .
+  #   ports:
+  #     - "5000:5000"
+  #   restart: always
+  #   depends_on:
+  #     - backend
 
 
 networks:
