@@ -1,6 +1,7 @@
 <script setup lang="ts">
 
 import {ref} from "vue";
+import Map from "./components/Map.vue";
 
 const rawInput = ref('');
 const error = ref('');
@@ -25,6 +26,7 @@ function start() {
   <input type="text">
   <button @click="start">Start</button>
   <div id="error" v-show="error">{{ error }}</div>
+  <Map/>
 </template>
 
 <style scoped>
