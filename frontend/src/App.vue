@@ -1,35 +1,45 @@
 <script setup lang="ts">
 
 import {ref} from "vue";
+import FrontPage from "./components/FrontPage.vue";
 import Map from "./components/Map.vue";
 import InteractiveBoard from "./components/InteractiveBoard.vue";
 
-const rawInput = ref('');
 const error = ref('');
 
-function start() {
-  const ws = new WebSocket("/ws?scenario_id=" + rawInput.value);
+
+let cars = ref([]);
+
+let customers = ref([]);
+
+let connected = ref(false);
+let ws: WebSocket | null;
+
+function start(uuid: string) {
+  ws = new WebSocket("/ws?scenario_id=" + uuid);
   ws.onerror = (event) => {
     console.log(event);
     error.value = "Websocket failed, see console";
   };
   ws.onmessage = (event) => {
-    console.log(event.data);
-  };
-  ws.onopen = (event) => {
-    console.log(event);
+    const data = JSON.parse(event.data);
+    cars.value = data.vehicles;
+    customers.value = data.customers;
+    connected.value = true;
   };
 }
 </script>
 
 <template>
-  <div class="main-container">
+  <div id="error" v-show="error">{{ error }}</div>
+  <FrontPage :start v-if="!connected"/>
+  <div class="main-container" v-else>
     <div class="left">
       <InteractiveBoard/>
     </div>
 
     <div class="right">
-      <Map/>
+      <Map :cars :customers/>
     </div>
   </div>
 </template>
