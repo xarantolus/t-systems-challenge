@@ -1,6 +1,7 @@
-use reqwest::Client;
-use serde::{Deserialize, Serialize};
 use std::error::Error;
+
+use reqwest::Client;
+use serde::Deserialize;
 
 use crate::models::{LaunchScenarioResponse, Scenario, UpdateScenario, UpdateScenarioResponse};
 
@@ -20,42 +21,13 @@ impl RunnerClient {
 
     async fn get<T: for<'de> Deserialize<'de>>(&self, endpoint: &str) -> Result<T, Box<dyn Error>> {
         let url = format!("{}/{}", self.base_url, endpoint);
-        let response = self.client.get(&url).send().await?            .error_for_status()?.json::<T>().await?;
-        Ok(response)
-    }
-
-    async fn post<B: Serialize, R: for<'de> Deserialize<'de>>(
-        &self,
-        endpoint: &str,
-        body: &B,
-    ) -> Result<R, Box<dyn Error>> {
-        let url = format!("{}/{}", self.base_url, endpoint);
         let response = self
             .client
-            .post(&url)
-            .json(body)
+            .get(&url)
             .send()
             .await?
             .error_for_status()?
-            .json::<R>()
-            .await?;
-        Ok(response)
-    }
-
-    async fn put<B: Serialize, R: for<'de> Deserialize<'de>>(
-        &self,
-        endpoint: &str,
-        body: &B,
-    ) -> Result<R, Box<dyn Error>> {
-        let url = format!("{}/{}", self.base_url, endpoint);
-        let response = self
-            .client
-            .put(&url)
-            .json(body)
-            .send()
-            .await?
-            .error_for_status()?
-            .json::<R>()
+            .json::<T>()
             .await?;
         Ok(response)
     }
@@ -90,7 +62,7 @@ impl RunnerClient {
             .body("{}")
             .send()
             .await?
-                        .error_for_status()?
+            .error_for_status()?
             .json()
             .await?;
 
@@ -98,11 +70,10 @@ impl RunnerClient {
             return Ok(scenario);
         }
 
-        return Err(match resp.error {
-            Some(e) => e,
-            None => "No error from backend, but also no scenario, lol".to_string(),
-        }
-        .into());
+        return Err(resp
+            .error
+            .unwrap_or_else(|| "No error from backend, but also no scenario, lol".to_string())
+            .into());
     }
 
     /// Assigns vehicles to customers.
@@ -114,9 +85,10 @@ impl RunnerClient {
     ) -> Result<UpdateScenarioResponse, Box<dyn Error>> {
         let scenario: UpdateScenarioResponse = self
             .client
-            .put(
-                &format!("{}/Scenarios/update_scenario/{}", self.base_url, scenario_id),
-            )
+            .put(&format!(
+                "{}/Scenarios/update_scenario/{}",
+                self.base_url, scenario_id
+            ))
             .header("Content-Type", "application/json")
             .body(serde_json::to_string(update_vehicles)?)
             .send()

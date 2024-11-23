@@ -1,34 +1,55 @@
-mod backend;
-pub mod matching;
-mod models;
-mod runner;
-
 use core::panic;
 use std::{cmp::min, convert::Infallible, error::Error, net::SocketAddr};
+use std::cmp::PartialEq;
+use std::collections::{HashMap, VecDeque};
 
-use backend::BackendClient;
 use env_logger::Env;
 use futures_util::{SinkExt, StreamExt};
 use log::{error, info};
-use models::{Scenario, UpdateScenario, UpdateVehicle};
-use runner::RunnerClient;
 use serde::Serialize;
 use tokio::{
     sync::mpsc::{self, Sender},
     time::sleep,
 };
 use warp::{
+    Filter,
     filters::ws::{Message, WebSocket},
     reject::Rejection,
     reply::Reply,
-    Filter,
 };
+
+use backend::BackendClient;
+use models::{Scenario, UpdateScenario, UpdateVehicle};
+use runner::RunnerClient;
+
+mod backend;
+pub mod matching;
+mod models;
+mod runner;
+
+#[derive(Debug, serde::Deserialize)]
+enum Algorithm {
+    Nearest,
+    ALSN,
+}
+
+impl PartialEq for Algorithm {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Algorithm::Nearest, Algorithm::Nearest) => true,
+            (Algorithm::ALSN, Algorithm::ALSN) => true,
+            _ => false,
+        }
+    }
+}
 
 #[derive(Debug, serde::Deserialize)]
 pub(crate) struct WebSocketParams {
     scenario_id: String,
     speed: Option<f64>,
+    algorithm: Option<Algorithm>,
 }
+
 #[derive(Debug, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct ScenarioCreationParams {
@@ -36,12 +57,11 @@ pub(crate) struct ScenarioCreationParams {
     number_of_customers: u64,
 }
 
-/// TODO: Implement the actual assignment algorithm
 pub fn update_scenario_first(scenario: &Scenario) -> UpdateScenario {
     // For each non-assigned vehicle, we assign the next available customer
     let mut vehicle_assignments: Vec<UpdateVehicle> = Vec::new();
 
-    let (available_vehicles, unavailable_vehicles): (Vec<_>, Vec<_>) = scenario
+    let (mut available_vehicles, unavailable_vehicles): (Vec<_>, Vec<_>) = scenario
         .vehicles
         .iter()
         .partition(|vehicle| vehicle.customer_id.is_none());
@@ -51,11 +71,6 @@ pub fn update_scenario_first(scenario: &Scenario) -> UpdateScenario {
         .filter_map(|v| v.customer_id.clone())
         .collect::<std::collections::HashSet<_>>();
 
-    let mut used_vehicle_ids = unavailable_vehicles
-        .iter()
-        .map(|v| v.id.clone())
-        .collect::<std::collections::HashSet<_>>();
-
     for customer in scenario.customers.iter() {
         if riding_customer_id_set.contains(&customer.id) || !customer.awaiting_service {
             continue;
@@ -63,11 +78,10 @@ pub fn update_scenario_first(scenario: &Scenario) -> UpdateScenario {
 
         let vehicle = available_vehicles
             .iter()
-            .filter(|v| !used_vehicle_ids.contains(&v.id))
             .min_by_key(|v| {
                 let dx = v.coord_x - customer.coord_x;
                 let dy = v.coord_y - customer.coord_y;
-                (dx * dx + dy * dy).to_bits()
+                (dx * dx + dy * dy).abs() as u64
             })
             .unwrap();
 
@@ -75,8 +89,12 @@ pub fn update_scenario_first(scenario: &Scenario) -> UpdateScenario {
             id: vehicle.id.clone(),
             customer_id: vehicle.customer_id.clone().unwrap_or(customer.id.clone()),
         });
-
-        used_vehicle_ids.insert(vehicle.id.clone());
+        available_vehicles.swap_remove(
+            available_vehicles
+                .iter()
+                .position(|v| v.id == vehicle.id)
+                .unwrap(),
+        );
     }
 
     UpdateScenario {
@@ -86,23 +104,17 @@ pub fn update_scenario_first(scenario: &Scenario) -> UpdateScenario {
 
 pub(crate) async fn scenario_simulator(
     runner_client: RunnerClient,
-    initial_scenario: Scenario,
-    speed: f64,
+    mut scenario: Scenario,
     ws_sender: Sender<Message>,
+    speed: f64,
+    algorithm: Algorithm,
 ) -> Result<(), Box<dyn Error>> {
-    let scenario_id = initial_scenario.id.clone();
-    let mut scenario = initial_scenario;
+    let scenario_id = scenario.id.clone();
 
-    // let initial_assignments = update_scenario_first(&scenario);
-    // let update = runner_client
-    //     .update_scenario(&scenario_id, &initial_assignments)
-    //     .await?;
-    // debug_assert!(
-    //     initial_assignments.vehicles.len()
-    //         <= min(scenario.vehicles.len(), scenario.customers.len())
-    // );
-    // debug_assert!(update.failed_to_update.is_empty());
-
+    let mut precomputed_assignments: HashMap<String, VecDeque<String>> = HashMap::new();
+    if algorithm == Algorithm::ALSN {
+        precomputed_assignments = todo!(); //matching::compute_assignment(&scenario);
+    }
     let scenario_launch = match runner_client.launch_scenario(&scenario_id, speed).await {
         Ok(s) => s,
         Err(e) => {
@@ -113,15 +125,32 @@ pub(crate) async fn scenario_simulator(
     info!("Scenario launched: {:?}", scenario_launch);
 
     while scenario.end_time.is_none() {
-        let assignments = update_scenario_first(&scenario);
-
+        let assignments = match algorithm {
+            Algorithm::Nearest => update_scenario_first(&scenario),
+            Algorithm::ALSN => UpdateScenario {
+                vehicles: precomputed_assignments
+                    .iter()
+                    .filter_map(|(v, customer)| {
+                        customer.front().map(|c| UpdateVehicle {
+                            id: v.clone(),
+                            customer_id: c.clone(),
+                        })
+                    })
+                    .collect(),
+            },
+        };
+        debug_assert!(
+            assignments.vehicles.len() <= min(scenario.vehicles.len(), scenario.customers.len())
+        );
         let update = runner_client
             .update_scenario(&scenario_id, &assignments)
             .await?;
 
-        debug_assert!(
-            assignments.vehicles.len() <= min(scenario.vehicles.len(), scenario.customers.len())
-        );
+        if algorithm == Algorithm::ALSN {
+            for x in update.updated_vehicles {
+                precomputed_assignments.get_mut(&x.id).unwrap().pop_front();
+            }
+        }
 
         #[cfg(debug_assertions)]
         if !update.failed_to_update.is_empty() {
@@ -191,8 +220,9 @@ pub(crate) async fn handle_connection(
         scenario_simulator(
             runner_client,
             initial_scenario_clone,
-            params.speed.unwrap_or(0.2f64),
             ws_writer_clone,
+            params.speed.unwrap_or(0.2f64),
+            params.algorithm.unwrap_or(Algorithm::Nearest),
         )
         .await
         .expect("Failed to run scenario simulation")
@@ -206,7 +236,7 @@ pub(crate) async fn handle_connection(
     // Every time we get a message from the user, handle it with the handler.
     while let Some(result) = user_ws_rx.next().await {
         match result {
-            Ok(message) => {
+            Ok(_message) => {
                 // TODO: Something
             }
             Err(e) => {
@@ -226,6 +256,7 @@ pub(crate) async fn handle_connection(
 struct ErrorMsg {
     message: String,
 }
+
 impl warp::reject::Reject for ErrorMsg {}
 
 pub(crate) async fn handle_ws_route(
@@ -243,21 +274,6 @@ pub(crate) async fn handle_ws_route(
             return Err(warp::reject::custom(custom_error));
         }
     };
-
-    // Actually launch the simulation
-    // TODO: not sure if we should do a step first?
-    // let _ = match runner_client
-    //     .launch_scenario(&params.scenario_id, 0.2)
-    //     .await
-    // {
-    //     Ok(s) => s,
-    //     Err(e) => {
-    //         let custom_error = ErrorMsg {
-    //             message: format!("Failed to launch scenario: {}", e),
-    //         };
-    //         return Err(warp::reject::custom(custom_error));
-    //     }
-    // };
 
     let response = ws.on_upgrade(move |socket| {
         handle_connection(socket, initial_scenario, runner_client, params)
@@ -312,12 +328,12 @@ async fn main() {
 
     let backend_base_url =
         std::env::var("BACKEND_BASE_URL").unwrap_or("http://localhost:8080".to_string());
-    let backendClient = backend::BackendClient::new(&backend_base_url);
+    let backend_client = BackendClient::new(&backend_base_url);
 
     let create_scenario_route = warp::path!("scenario" / "create")
         .and(warp::post())
         .and(warp::query::<ScenarioCreationParams>())
-        .and(with_backend_client(backendClient))
+        .and(with_backend_client(backend_client))
         .and_then(create_scenario);
 
     let ws_route = warp::path("ws")
