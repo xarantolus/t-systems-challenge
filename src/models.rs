@@ -1,6 +1,6 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Scenario {
     pub id: String,
@@ -11,7 +11,7 @@ pub struct Scenario {
     pub customers: Vec<Customer>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Customer {
     pub id: String,
@@ -22,7 +22,7 @@ pub struct Customer {
     pub awaiting_service: bool,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Vehicle {
     pub id: String,
@@ -64,6 +64,3 @@ pub struct LaunchScenarioResponse {
     pub scenario_id: String,
     pub start_time: String,
 }
-
-
-

@@ -1,14 +1,21 @@
 mod models;
 mod runner;
 
-use std::net::SocketAddr;
+use std::{convert::Infallible, net::SocketAddr};
 
 use env_logger::Env;
 use futures_util::{SinkExt, StreamExt};
 use log::{error, info};
 use models::Scenario;
+use runner::RunnerClient;
+use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc::{self, UnboundedSender};
-use warp::{filters::ws::{Message, WebSocket}, reply::Reply, Filter};
+use warp::{
+    filters::ws::{Message, WebSocket},
+    reject::Rejection,
+    reply::Reply,
+    Filter,
+};
 
 #[derive(Debug, serde::Deserialize)]
 pub(crate) struct WebSocketParams {
@@ -19,7 +26,12 @@ pub(crate) async fn scenario_simulator(scenario: &Scenario, ws_sender: Unbounded
     // First of all
 }
 
-pub(crate) async fn handle_connection(ws: WebSocket, params: WebSocketParams) {
+pub(crate) async fn handle_connection(
+    ws: WebSocket,
+    initial_scenario: Scenario,
+    runner_client: RunnerClient,
+    params: WebSocketParams,
+) {
     let (mut user_ws_tx, mut user_ws_rx) = ws.split();
     let (websocket_writer, mut websocket_outbound_stream) = mpsc::unbounded_channel();
 
@@ -71,10 +83,37 @@ pub(crate) async fn handle_connection(ws: WebSocket, params: WebSocketParams) {
     );
 }
 
-pub(crate) fn handle_ws_route(device_info: WebSocketParams, ws: warp::ws::Ws) -> impl Reply {
-    // TODO: Set up / calculate the given scenario
+#[derive(Debug, Serialize, Clone)]
+struct ErrorMsg {
+    message: String,
+}
+impl warp::reject::Reject for ErrorMsg {}
 
-    ws.on_upgrade(move |socket| handle_connection(socket, device_info))
+pub(crate) async fn handle_ws_route(
+    params: WebSocketParams,
+    runner_client: RunnerClient,
+    ws: warp::ws::Ws,
+) -> Result<impl Reply, Rejection> {
+    let initial_scenario = match runner_client.initialize_scenario(&params.scenario_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            let custom_error = ErrorMsg {
+                message: format!("Failed to initialize scenario: {}", e),
+            };
+            return Err(warp::reject::custom(custom_error));
+        }
+    };
+
+    let response = ws.on_upgrade(move |socket| {
+        handle_connection(socket, initial_scenario, runner_client, params)
+    });
+
+    Ok(response)
+}
+fn with_client(
+    client: RunnerClient,
+) -> impl Filter<Extract = (RunnerClient,), Error = Infallible> + Clone {
+    warp::any().map(move || client.clone())
 }
 
 #[tokio::main]
@@ -86,10 +125,15 @@ async fn main() {
         .parse()
         .expect("PORT env variable must be a number");
 
+    let runner_base_url =
+        std::env::var("RUNNER_BASE_URL").unwrap_or("http://localhost:8090/".to_string());
+    let runner_client = RunnerClient::new(&runner_base_url);
+
     let ws_route = warp::path("ws")
         .and(warp::query::<WebSocketParams>())
+        .and(with_client(runner_client))
         .and(warp::ws().map(|ws: warp::ws::Ws| ws.max_frame_size(64 << 20)))
-        .map(handle_ws_route);
+        .and_then(handle_ws_route);
 
     let routes = ws_route;
 
