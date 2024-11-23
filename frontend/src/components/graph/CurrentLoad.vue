@@ -30,9 +30,7 @@ const chartData = ref({
 // Simulate load updates
 const simulateLoad = () => {
   // Simulating load change, in a real application this would be dynamic
-  loadData.value.push(currentLoad.value);
-  loadData.value.shift(); // Remove the first data point
-  currentLoad.value = Math.floor(Math.random() * 100); // Simulate a random load value
+  // loadData.value.push(currentLoad.value);
 
   // Update chart data
   chartData.value = {

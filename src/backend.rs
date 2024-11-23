@@ -12,16 +12,23 @@ pub struct BackendClient {
 }
 
 impl BackendClient {
-    pub fn new(runner_server_base_url: &str) -> Self {
+    pub fn new(backend_server_base_url: &str) -> Self {
         Self {
             client: Client::new(),
-            base_url: runner_server_base_url.to_string(),
+            base_url: backend_server_base_url.trim_end_matches('/').to_string(),
         }
     }
 
     async fn get<T: for<'de> Deserialize<'de>>(&self, endpoint: &str) -> Result<T, Box<dyn Error>> {
         let url = format!("{}/{}", self.base_url, endpoint);
-        let response = self.client.get(&url).send().await?.json::<T>().await?;
+        let response = self
+            .client
+            .get(&url)
+            .send()
+            .await?
+            .error_for_status()?
+            .json::<T>()
+            .await?;
         Ok(response)
     }
 
@@ -37,6 +44,7 @@ impl BackendClient {
             .json(body)
             .send()
             .await?
+            .error_for_status()?
             .json::<R>()
             .await?;
         Ok(response)
@@ -53,7 +61,8 @@ impl BackendClient {
                 self.base_url, num_vehicles, num_customers
             ))
             .send()
-            .await?;
+            .await?
+            .error_for_status()?;
 
         // Print the response body
         let response_body = response.text().await?;

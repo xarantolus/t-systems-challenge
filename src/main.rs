@@ -1,5 +1,5 @@
-pub mod matching;
 mod backend;
+pub mod matching;
 mod models;
 mod runner;
 
@@ -14,7 +14,7 @@ use models::{Scenario, UpdateScenario, UpdateVehicle};
 use runner::RunnerClient;
 use serde::Serialize;
 use tokio::{
-    sync::mpsc::{self, UnboundedSender},
+    sync::mpsc::{self, Sender},
     time::sleep,
 };
 use warp::{
@@ -53,7 +53,7 @@ pub fn update_scenario_first(scenario: &Scenario) -> UpdateScenario {
     for (customer, vehicle) in relevant_customers.zip(relevant_vehicles) {
         vehicle_assignments.push(UpdateVehicle {
             id: vehicle.id.clone(),
-            customer_id: vec![customer.id.clone()],
+            customer_id: customer.id.clone(),
         });
     }
 
@@ -66,7 +66,7 @@ pub(crate) async fn scenario_simulator(
     runner_client: RunnerClient,
     initial_scenario: Scenario,
     speed: f64,
-    ws_sender: UnboundedSender<Message>,
+    ws_sender: Sender<Message>,
 ) -> Result<(), Box<dyn Error>> {
     let scenario_id = initial_scenario.id.clone();
     let mut scenario = initial_scenario;
@@ -93,39 +93,36 @@ pub(crate) async fn scenario_simulator(
     while scenario.end_time.is_none() {
         let assignments = update_scenario_first(&scenario);
 
-        if !assignments.vehicles.is_empty() {
-            let update = runner_client
-                .update_scenario(&scenario_id, &assignments)
-                .await?;
+        let update = runner_client
+            .update_scenario(&scenario_id, &assignments)
+            .await?;
 
-            debug_assert!(
-                assignments.vehicles.len()
-                    <= min(scenario.vehicles.len(), scenario.customers.len())
+        debug_assert!(
+            assignments.vehicles.len() <= min(scenario.vehicles.len(), scenario.customers.len())
+        );
+
+        #[cfg(debug_assertions)]
+        if !update.failed_to_update.is_empty() {
+            // Dump all info to stdout before panicking
+            println!(
+                "Scenario: {}",
+                serde_json::to_string_pretty(&scenario).unwrap()
+            );
+            println!(
+                "Assignments: {}",
+                serde_json::to_string_pretty(&assignments).unwrap()
+            );
+            println!(
+                "Failed to Update (Vehicle IDs): {}",
+                serde_json::to_string_pretty(&update.failed_to_update).unwrap()
             );
 
-            #[cfg(debug_assertions)]
-            if !update.failed_to_update.is_empty() {
-                // Dump all info to stdout before panicking
-                println!(
-                    "Scenario: {}",
-                    serde_json::to_string_pretty(&scenario).unwrap()
-                );
-                println!(
-                    "Assignments: {}",
-                    serde_json::to_string_pretty(&assignments).unwrap()
-                );
-                println!(
-                    "Failed to Update (Vehicle IDs): {}",
-                    serde_json::to_string_pretty(&update.failed_to_update).unwrap()
-                );
-
-                panic!("Wrong update sent for some vehicles!");
-            }
+            panic!("Wrong update sent for some vehicles!");
         }
 
         scenario = runner_client.get_scenario(&scenario_id).await?;
 
-        let Ok(_) = ws_sender.send((&scenario).try_into()?) else {
+        let Ok(_) = ws_sender.send((&scenario).try_into()?).await else {
             return Err("WebSocket disconnected".into());
         };
 
@@ -143,7 +140,7 @@ pub(crate) async fn handle_connection(
     params: WebSocketParams,
 ) {
     let (mut user_ws_tx, mut user_ws_rx) = ws.split();
-    let (websocket_writer, mut websocket_outbound_stream) = mpsc::unbounded_channel();
+    let (websocket_writer, mut websocket_outbound_stream) = mpsc::channel(1);
 
     // Every time we get a message from the outbound stream, send it to the user.
     tokio::spawn(async move {
@@ -172,7 +169,7 @@ pub(crate) async fn handle_connection(
         scenario_simulator(
             runner_client,
             initial_scenario_clone,
-            params.speed.unwrap_or(1f64),
+            params.speed.unwrap_or(5f64),
             ws_writer_clone,
         )
         .await
