@@ -135,9 +135,6 @@ impl RunnerClient {
             .text()
             .await?;
 
-        // Print the raw response body to stdout
-        println!("Raw response: {}", response);
-
         // Deserialize the response body into the expected struct
         let start: LaunchScenarioResponse = serde_json::from_str(&response)?;
 

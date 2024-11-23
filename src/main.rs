@@ -71,9 +71,14 @@ pub(crate) async fn scenario_simulator(
     );
     debug_assert!(update.failed_to_update.is_empty());
 
-    let Ok(_) = runner_client.launch_scenario(&scenario_id, 0.2).await else {
-        return Err("Failed to launch scenario".into());
+    let scenario_launch = match runner_client.launch_scenario(&scenario_id, 0.2).await {
+        Ok(s) => s,
+        Err(e) => {
+            return Err(format!("Failed to launch scenario: {}", e).into());
+        }
     };
+
+    info!("Scenario launched: {:?}", scenario_launch);
 
     while scenario.end_time.is_none() {
         let assignments = update_scenario_first(&scenario);

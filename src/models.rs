@@ -60,11 +60,11 @@ pub struct UpdateScenarioResponse {
     pub updated_vehicles: Vec<Vehicle>,
 }
 
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct LaunchScenarioResponse {
     pub message: String,
     pub scenario_id: String,
+    #[serde(rename = "startTime")]
     pub start_time: String,
 }
 
