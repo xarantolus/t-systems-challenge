@@ -92,31 +92,35 @@ pub(crate) async fn scenario_simulator(
 
     while scenario.end_time.is_none() {
         let assignments = update_scenario_first(&scenario);
-        let update = runner_client
-            .update_scenario(&scenario_id, &assignments)
-            .await?;
 
-        debug_assert!(
-            assignments.vehicles.len() <= min(scenario.vehicles.len(), scenario.customers.len())
-        );
+        if !assignments.vehicles.is_empty() {
+            let update = runner_client
+                .update_scenario(&scenario_id, &assignments)
+                .await?;
 
-        #[cfg(debug_assertions)]
-        if !update.failed_to_update.is_empty() {
-            // Dump all info to stdout before panicking
-            println!(
-                "Scenario: {}",
-                serde_json::to_string_pretty(&scenario).unwrap()
-            );
-            println!(
-                "Assignments: {}",
-                serde_json::to_string_pretty(&assignments).unwrap()
-            );
-            println!(
-                "Failed to Update (Vehicle IDs): {}",
-                serde_json::to_string_pretty(&update.failed_to_update).unwrap()
+            debug_assert!(
+                assignments.vehicles.len()
+                    <= min(scenario.vehicles.len(), scenario.customers.len())
             );
 
-            panic!("Wrong update sent for some vehicles!");
+            #[cfg(debug_assertions)]
+            if !update.failed_to_update.is_empty() {
+                // Dump all info to stdout before panicking
+                println!(
+                    "Scenario: {}",
+                    serde_json::to_string_pretty(&scenario).unwrap()
+                );
+                println!(
+                    "Assignments: {}",
+                    serde_json::to_string_pretty(&assignments).unwrap()
+                );
+                println!(
+                    "Failed to Update (Vehicle IDs): {}",
+                    serde_json::to_string_pretty(&update.failed_to_update).unwrap()
+                );
+
+                panic!("Wrong update sent for some vehicles!");
+            }
         }
 
         scenario = runner_client.get_scenario(&scenario_id).await?;
