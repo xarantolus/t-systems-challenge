@@ -8,10 +8,10 @@ export default {
   },
   setup(props) {
     const uuid = ref('');
-    const speed = ref(0.2);
+    const speed = ref(0.033);
     const creating = ref(false);
-    const numCars = ref(1);
-    const numCustomers = ref(1);
+    const numCars = ref(10);
+    const numCustomers = ref(20);
 
     const handleStart = () => {
       props.start!(uuid.value, speed.value);

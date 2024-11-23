@@ -221,7 +221,7 @@ pub(crate) async fn handle_connection(
             runner_client,
             initial_scenario_clone,
             ws_writer_clone,
-            params.speed.unwrap_or(0.2f64),
+            params.speed.unwrap_or(0.033f64),
             params.algorithm.unwrap_or(Algorithm::Nearest),
         )
         .await
