@@ -117,6 +117,7 @@ impl RunnerClient {
             .put(
                 &format!("{}/Scenarios/update_scenario/{}", self.base_url, scenario_id),
             )
+            .header("Content-Type", "application/json")
             .body(serde_json::to_string(update_vehicles)?)
             .send()
             .await?
