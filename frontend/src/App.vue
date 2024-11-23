@@ -34,7 +34,7 @@ const getError = () => error;
 
 <template>
   <div id="error" v-if="!connected && error">{{ error }}</div>
-  <FrontPage :start="start" :error="getError" v-if="connected" />
+  <FrontPage :start="start" :error="getError" v-if="!connected" />
   <div class="main-container" v-else>
     <div class="left">
       <div class="interactive-board-container">
