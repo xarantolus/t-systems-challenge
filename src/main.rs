@@ -57,7 +57,7 @@ pub fn update_scenario_first(scenario: &Scenario) -> UpdateScenario {
         .collect::<std::collections::HashSet<_>>();
 
     for customer in scenario.customers.iter() {
-        if riding_customer_id_set.contains(&customer.id) {
+        if riding_customer_id_set.contains(&customer.id) || !customer.awaiting_service {
             continue;
         }
 
