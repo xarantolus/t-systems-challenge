@@ -36,3 +36,16 @@ pub struct Vehicle {
     pub active_time: i64,
     pub number_of_trips: i64,
 }
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateScenario {
+    pub vehicles: Vec<UpdateVehicle>,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateVehicle {
+    id: String,
+    customer_id: String,
+}
