@@ -2,12 +2,13 @@ mod matching;
 mod models;
 mod runner;
 
-use std::{convert::Infallible, net::SocketAddr};
+use core::panic;
+use std::{convert::Infallible, error::Error, net::SocketAddr};
 
 use env_logger::Env;
 use futures_util::{SinkExt, StreamExt};
 use log::{error, info};
-use models::Scenario;
+use models::{Scenario, UpdateScenario, UpdateVehicle};
 use runner::RunnerClient;
 use serde::Serialize;
 use tokio::sync::mpsc::{self, UnboundedSender};
@@ -23,8 +24,60 @@ pub(crate) struct WebSocketParams {
     scenario_id: String,
 }
 
-pub(crate) async fn scenario_simulator(scenario: Scenario, ws_sender: UnboundedSender<Message>) {
-    // First of all
+/// TODO: Implement the actual assignment algorithm
+pub fn update_scenario_first(scenario: &Scenario) -> UpdateScenario {
+    // For each non-assigned vehicle, we assign the next available customer
+    let mut vehicle_assignments: Vec<UpdateVehicle> = Vec::new();
+
+    let relevant_customers = scenario
+        .customers
+        .iter()
+        .filter(|customer| customer.awaiting_service);
+    let relevant_vehicles = scenario
+        .vehicles
+        .iter()
+        .filter(|vehicle| vehicle.is_available);
+
+    for (customer, vehicle) in relevant_customers.zip(relevant_vehicles) {
+        vehicle_assignments.push(UpdateVehicle {
+            id: vehicle.id.clone(),
+            customer_id: customer.id.clone(),
+        });
+    }
+
+    UpdateScenario {
+        vehicles: vehicle_assignments,
+    }
+}
+
+pub(crate) async fn scenario_simulator(
+    runner_client: RunnerClient,
+    initial_scenario: Scenario,
+    ws_sender: UnboundedSender<Message>,
+) -> Result<(), Box<dyn Error>> {
+    let scenario_id = initial_scenario.id.clone();
+    let mut scenario = initial_scenario;
+
+    // Not done yet
+    while scenario.end_time.is_none() {
+        let assignments = update_scenario_first(&scenario);
+        let update = runner_client
+            .update_scenario(&scenario_id, &assignments)
+            .await?;
+
+        #[cfg(debug_assertions)]
+        if !update.failed_to_update.is_empty() {
+            panic!("Wrong update sent for some vehicles!");
+        }
+
+        scenario.merge(&update);
+
+        ws_sender
+            .send((&scenario).try_into()?)
+            .expect("sending to websocket should work")
+    }
+
+    Ok(())
 }
 
 pub(crate) async fn handle_connection(
@@ -55,13 +108,14 @@ pub(crate) async fn handle_connection(
     tokio::spawn(async move {
         // TODO: some initial messages for setup
         let _ = ws_writer_clone.send(
-            initial_scenario
+            (&initial_scenario)
                 .try_into()
                 .expect("json serialization failed in initial write"),
         );
 
-        // TODO: Start the scenario simulation
-        scenario_simulator(initial_scenario_clone, ws_writer_clone).await;
+        scenario_simulator(runner_client, initial_scenario_clone, ws_writer_clone)
+            .await
+            .expect("Failed to run scenario simulation")
     });
 
     log::info!(
@@ -105,6 +159,21 @@ pub(crate) async fn handle_ws_route(
         Err(e) => {
             let custom_error = ErrorMsg {
                 message: format!("Failed to initialize scenario: {}", e),
+            };
+            return Err(warp::reject::custom(custom_error));
+        }
+    };
+
+    // Actually launch the simulation
+    // TODO: not sure if we should do a step first?
+    let _ = match runner_client
+        .launch_scenario(&params.scenario_id, 0.2)
+        .await
+    {
+        Ok(s) => s,
+        Err(e) => {
+            let custom_error = ErrorMsg {
+                message: format!("Failed to launch scenario: {}", e),
             };
             return Err(warp::reject::custom(custom_error));
         }

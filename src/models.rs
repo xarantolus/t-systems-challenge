@@ -47,15 +47,17 @@ pub struct UpdateScenario {
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateVehicle {
-    id: String,
-    customer_id: String,
+    pub id: String,
+    pub customer_id: String,
 }
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateScenarioResponse {
-    failed_to_update: Vec<String>,
-    updated_vehicles: Vec<Vehicle>,
+    #[serde(default)]
+    pub failed_to_update: Vec<String>,
+    #[serde(default)]
+    pub updated_vehicles: Vec<Vehicle>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -67,10 +69,16 @@ pub struct LaunchScenarioResponse {
 }
 
 // Allows sending a scenario as text via the WebSocket connection
-impl TryFrom<Scenario> for Message {
+impl TryFrom<&Scenario> for Message {
     type Error = anyhow::Error;
 
-    fn try_from(scenario: Scenario) -> Result<Self, Self::Error> {
+    fn try_from(scenario: &Scenario) -> Result<Self, Self::Error> {
         Ok(Message::text(serde_json::to_string(&scenario)?))
+    }
+}
+
+impl Scenario {
+    pub fn merge(&mut self, update: &UpdateScenarioResponse) {
+        // TODO: Implement merging
     }
 }
