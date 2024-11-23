@@ -13,7 +13,7 @@ import ConditionDD from "./Dropdowns/ConditionDD.vue";
     </div>
 
     <div class="panel-block">
-      <button class="button is-link is-outlined is-fullwidth">
+      <button class="button is-link is-outlined is-fullwidth" style="color: #e12885; border-color: #e12885">
         Reset all filters
       </button>
     </div>
@@ -22,4 +22,11 @@ import ConditionDD from "./Dropdowns/ConditionDD.vue";
 </template>
 
 <style scoped>
+.panel {
+  border-radius: 15px;
+}
+.panel-heading {
+  border-top-left-radius: 15px;
+  border-top-right-radius: 15px;
+}
 </style>

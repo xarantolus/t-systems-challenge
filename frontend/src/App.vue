@@ -7,7 +7,9 @@ import InteractiveBoard from "./components/InteractiveBoard.vue";
 
 const error = ref('');
 
-let cars = ref([]);
+let cars = ref([
+  { coordX: 40.7128, coordY: -74.0060, id: 'car1' }
+]);
 let customers = ref([]);
 let connected = ref(false);
 let ws: WebSocket | null;
@@ -29,7 +31,7 @@ function start(uuid: string) {
 
 <template>
   <div id="error" v-show="error">{{ error }}</div>
-  <FrontPage :start v-if="!connected"/>
+  <FrontPage :start v-if="connected"/>
   <div class="main-container" v-else>
     <div class="left">
       <InteractiveBoard/>
@@ -57,6 +59,8 @@ function start(uuid: string) {
 /* Right section styling */
 .right {
   flex: 50%; /* Takes exactly half of the screen width */
+  border-radius: 15px; /* Add rounded corners */
+  overflow: hidden; /* Ensure content doesn't spill over the rounded corners */
 }
 
 /* Error message styling */
