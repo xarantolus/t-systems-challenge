@@ -8,12 +8,13 @@ export default {
   },
   setup(props) {
     const uuid = ref('');
+    const speed = ref('');
     const creating = ref(false);
     const numCars = ref(1);
     const numCustomers = ref(1);
 
     const handleStart = () => {
-      props.start!(uuid.value);
+      props.start!(uuid.value, speed.value);
     };
 
     const handleSubmit = async (_: Event) => {
@@ -29,11 +30,12 @@ export default {
       }
       const data = await response.json();
       creating.value = false;
-      props.start!(data.id);
+      props.start!(data.id, speed.value);
     };
 
     return {
       uuid,
+      speed,
       creating,
       numCars,
       numCustomers,
@@ -50,6 +52,13 @@ export default {
     <div id="flex">
       <div>
         <div class="box">
+          <h3 class="title is-3">Set Speed</h3>
+          <div class="input-button-container">
+            <input class="input is-rounded" type="number" placeholder="Speed" v-model="speed"/>
+            <button class="button" @click="handleStart">Submit</button>
+          </div>
+        </div>
+        <div class="box">
           <h3 class="title is-3">Create Scenario</h3>
           <form @submit.prevent="handleSubmit">
             <div>
@@ -61,7 +70,7 @@ export default {
                 <label for="numCustomers">Number of Customers:</label>
                 <input class="input is-rounded" type="number" id="numCustomers" v-model="numCustomers" min="1" max="200">
               </div>
-              <button type="submit" :class="{'button':true, 'is-loading': creating}">Submit</button>
+              <button type="submit" :class="{'button':true, 'is-loading': creating}">Start</button>
             </div>
           </form>
         </div>
@@ -79,9 +88,10 @@ export default {
 <style scoped>
 #flex {
   display: flex;
-  flex-wrap: wrap;
+  justify-content: space-between; /* Distribute boxes evenly */
   gap: 2rem;
-  justify-content: center;
+  flex-wrap: nowrap; /* Prevent wrapping */
+  align-items: flex-start; /* Align items to the top */
 }
 
 .box {
@@ -94,6 +104,7 @@ export default {
   border: 1px solid #ddd;
   border-radius: 8px;
   box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+  flex: 1; /* Allow boxes to grow equally */
 }
 
 .input-button-container {
@@ -117,4 +128,5 @@ export default {
 h3 {
   margin-bottom: auto;
 }
+
 </style>

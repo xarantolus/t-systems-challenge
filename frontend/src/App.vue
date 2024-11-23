@@ -15,8 +15,8 @@ let customers = ref([]);
 let connected = ref(false);
 let ws: WebSocket | null;
 
-function start(uuid: string) {
-  ws = new WebSocket("/ws?scenario_id=" + uuid);
+function start(uuid: string, speed: string) {
+  ws = new WebSocket("/ws?scenario_id=" + uuid + "&speed=" + speed);
   ws.onerror = (event) => {
     console.log(event);
     error.value = "Websocket failed, see console";
