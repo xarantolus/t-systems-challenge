@@ -54,12 +54,12 @@ export default {
           <form @submit.prevent="handleSubmit">
             <div>
               <label for="numCars">Number of Cars:</label>
-              <input type="number" id="numCars" v-model="numCars" min="1" max="50">
+              <input class="input is-rounded" type="number" id="numCars" v-model="numCars" min="1" max="50">
             </div>
             <div class="input-button-container">
               <div>
                 <label for="numCustomers">Number of Customers:</label>
-                <input type="number" id="numCustomers" v-model="numCustomers" min="1" max="200">
+                <input class="input is-rounded" type="number" id="numCustomers" v-model="numCustomers" min="1" max="200">
               </div>
               <button type="submit" :class="{'button':true, 'is-loading': creating}">Submit</button>
             </div>
@@ -69,7 +69,7 @@ export default {
       <div class="box">
         <h3 class="title is-3">Load scenario</h3>
         <div class="input-button-container">
-          <input type="text" placeholder="UUID" v-model="uuid">
+          <input class="input is-rounded" type="text" placeholder="UUID" v-model="uuid"/>
           <button class="button" @click="handleStart">Start</button>
         </div>
       </div>
@@ -79,21 +79,42 @@ export default {
 <style scoped>
 #flex {
   display: flex;
-  flex: content;
-  flex-flow: row wrap;
+  flex-wrap: wrap;
   gap: 2rem;
-  justify-items: center;
+  justify-content: center;
 }
 
-.button {
-  background-color: #e12885;
-  color: white;
-  margin: 20px;
+.box {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1.5rem;
+  height: 100%;
+  min-height: 200px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .input-button-container {
   display: flex;
   flex-direction: column;
-  gap: 10px; /* Adjust the gap as needed */
+  gap: 10px;
+  margin-top: auto;
+}
+
+.button {
+  background-color: #e12885;
+  color: white;
+  margin: 0;
+  align-self: flex-end;
+}
+
+.input.is-rounded {
+  margin-bottom: 10px;
+}
+
+h3 {
+  margin-bottom: auto;
 }
 </style>
