@@ -9,7 +9,7 @@ import CurrentLoad from "./components/graph/CurrentLoad.vue";
 const error = ref('');
 
 let cars = ref([
-  { coordX: 40.7128, coordY: -74.0060, id: 'car1' }
+  {coordX: 40.7128, coordY: -74.0060, id: 'car1'}
 ]);
 let customers = ref([]);
 let connected = ref(false);
@@ -28,11 +28,13 @@ function start(uuid: string) {
     connected.value = true;
   };
 }
+
+const getError = () => error;
 </script>
 
 <template>
-  <div id="error" v-show="error">{{ error }}</div>
-  <FrontPage :start v-if="connected"/>
+  <div id="error" v-if="!connected && error">{{ error }}</div>
+  <FrontPage :start :error="getError" v-if="!connected"/>
   <div class="main-container" v-else>
     <div class="left">
       <InteractiveBoard/>

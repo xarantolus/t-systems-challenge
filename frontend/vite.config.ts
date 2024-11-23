@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import {defineConfig} from 'vite'
 import vue from '@vitejs/plugin-vue'
 
 // https://vite.dev/config/
@@ -11,8 +11,8 @@ export default defineConfig({
         ws: true
       },
       '/scenario/create': {
-        target: 'http://localhost:5000/scenario/create'
-      }
+        target: 'http://localhost:5000/'
+      },
     }
   }
 })

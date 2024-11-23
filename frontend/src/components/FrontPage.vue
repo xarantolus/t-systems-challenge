@@ -1,23 +1,44 @@
 <script lang="ts">
-
 import {ref} from "vue";
 
 export default {
   props: {
     start: Function,
+    error: Function,
   },
   setup(props) {
     const uuid = ref('');
+    const creating = ref(false);
+    const numCars = ref(1);
+    const numCustomers = ref(1);
 
     const handleStart = () => {
-      if (props.start) {
-        props.start(uuid.value);
+      props.start!(uuid.value);
+    };
+
+    const handleSubmit = async (_: Event) => {
+      creating.value = true;
+      const queryString = new URLSearchParams({
+        numberOfVehicles: numCars.value.toString(),
+        numberOfCustomers: numCustomers.value.toString(),
+      }).toString();
+      const response = await fetch(`/scenario/create?${queryString}`, {method: 'POST',});
+      if (!response.ok) {
+        props.error!().value = 'Network response was not ok';
+        return;
       }
+      const data = await response.json();
+      creating.value = false;
+      props.start!(data.id);
     };
 
     return {
       uuid,
+      creating,
+      numCars,
+      numCustomers,
       handleStart,
+      handleSubmit,
     };
   }
 };
@@ -28,16 +49,16 @@ export default {
   <div id="flex">
     <div>
       <h3 class="title is-3">Create Scenario</h3>
-      <form action="/scenario/create">
+      <form @submit.prevent="handleSubmit">
         <div>
           <label for="numCars">Number of Cars:</label>
-          <input type="number" id="numCars" min="1" max="50">
+          <input type="number" id="numCars" v-model="numCars" min="1" max="50">
         </div>
         <div>
           <label for="numCustomers">Number of Customers:</label>
-          <input type="number" id="numCustomers" min="1" max="200">
+          <input type="number" id="numCustomers" v-model="numCustomers" min="1" max="200">
         </div>
-        <button type="submit">Submit</button>
+        <button type="submit" :class="{'button':true, 'is-loading': creating}">Submit</button>
       </form>
     </div>
     <div>

@@ -35,14 +35,8 @@ import person from "../assets/person.png";
 
 export default {
   props: {
-    cars: {
-      type: Array,
-      required: true,
-    },
-    customers: {
-      type: Array,
-      required: true,
-    },
+    cars: Array,
+    customers: Array,
   },
   components: {
     LMap,
