@@ -41,6 +41,23 @@ impl RunnerClient {
         Ok(response)
     }
 
+    async fn put<B: Serialize, R: for<'de> Deserialize<'de>>(
+        &self,
+        endpoint: &str,
+        body: &B,
+    ) -> Result<R, Box<dyn Error>> {
+        let url = format!("{}/{}", self.base_url, endpoint);
+        let response = self
+            .client
+            .put(&url)
+            .json(body)
+            .send()
+            .await?
+            .json::<R>()
+            .await?;
+        Ok(response)
+    }
+
     /// Fetches an already initialized scenario
     pub async fn get_scenario(&self, scenario_id: &str) -> Result<Scenario, Box<dyn Error>> {
         let scenario: Scenario = self
@@ -93,7 +110,7 @@ impl RunnerClient {
         update_vehicles: &UpdateScenario,
     ) -> Result<UpdateScenarioResponse, Box<dyn Error>> {
         let scenario: UpdateScenarioResponse = self
-            .post(
+            .put(
                 &format!("/Scenarios/update_scenario/{}", scenario_id),
                 update_vehicles,
             )

@@ -3,7 +3,7 @@ mod models;
 mod runner;
 
 use core::panic;
-use std::{convert::Infallible, error::Error, net::SocketAddr};
+use std::{cmp::min, convert::Infallible, error::Error, net::SocketAddr};
 
 use env_logger::Env;
 use futures_util::{SinkExt, StreamExt};
@@ -58,19 +58,36 @@ pub(crate) async fn scenario_simulator(
     let scenario_id = initial_scenario.id.clone();
     let mut scenario = initial_scenario;
 
-    // Not done yet
     while scenario.end_time.is_none() {
         let assignments = update_scenario_first(&scenario);
         let update = runner_client
             .update_scenario(&scenario_id, &assignments)
             .await?;
 
+        debug_assert!(
+            assignments.vehicles.len() <= min(scenario.vehicles.len(), scenario.customers.len())
+        );
+
         #[cfg(debug_assertions)]
         if !update.failed_to_update.is_empty() {
+            // Dump all info to stdout before panicking
+            println!(
+                "Scenario: {}",
+                serde_json::to_string_pretty(&scenario).unwrap()
+            );
+            println!(
+                "Assignments: {}",
+                serde_json::to_string_pretty(&assignments).unwrap()
+            );
+            println!(
+                "Failed to Update (Vehicle IDs): {}",
+                serde_json::to_string_pretty(&update.failed_to_update).unwrap()
+            );
+
             panic!("Wrong update sent for some vehicles!");
         }
 
-        scenario.merge(&update);
+        scenario = runner_client.get_scenario(&scenario_id).await?;
 
         ws_sender
             .send((&scenario).try_into()?)
@@ -166,18 +183,18 @@ pub(crate) async fn handle_ws_route(
 
     // Actually launch the simulation
     // TODO: not sure if we should do a step first?
-    let _ = match runner_client
-        .launch_scenario(&params.scenario_id, 0.2)
-        .await
-    {
-        Ok(s) => s,
-        Err(e) => {
-            let custom_error = ErrorMsg {
-                message: format!("Failed to launch scenario: {}", e),
-            };
-            return Err(warp::reject::custom(custom_error));
-        }
-    };
+    // let _ = match runner_client
+    //     .launch_scenario(&params.scenario_id, 0.2)
+    //     .await
+    // {
+    //     Ok(s) => s,
+    //     Err(e) => {
+    //         let custom_error = ErrorMsg {
+    //             message: format!("Failed to launch scenario: {}", e),
+    //         };
+    //         return Err(warp::reject::custom(custom_error));
+    //     }
+    // };
 
     let response = ws.on_upgrade(move |socket| {
         handle_connection(socket, initial_scenario, runner_client, params)
