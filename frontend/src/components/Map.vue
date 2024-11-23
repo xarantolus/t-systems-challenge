@@ -1,18 +1,26 @@
 <template>
   <div class="map-container">
-    <l-map ref="map" v-model:zoom="zoom" :center="[47.41322, -1.219482]">
+    <l-map ref="map" v-model:zoom="zoom" :center="[cars[0].coordX, cars[0].coordY]">
       <l-tile-layer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           layer-type="base"
           name="OpenStreetMap"
       ></l-tile-layer>
       <l-marker
-          v-for="(marker, index) in markers"
+          v-for="(marker, index) in cars"
           :key="index"
-          :lat-lng="marker.position"
+          :lat-lng="[marker.coordX, marker.coordY]"
           :icon="carIcon"
       >
-        <l-popup>{{ marker.popupText }}</l-popup>
+        <l-popup>{{ marker.id }}</l-popup>
+      </l-marker>
+      <l-marker
+          v-for="(marker, index) in customers"
+          :key="index"
+          :lat-lng="[marker.coordX, marker.coordY]"
+          :icon="personIcon"
+      >
+        <l-popup>{{ marker.id }}</l-popup>
       </l-marker>
     </l-map>
   </div>
@@ -21,10 +29,15 @@
 <script>
 import "leaflet";
 import "leaflet/dist/leaflet.css";
-import { LMap, LMarker, LPopup, LTileLayer } from "@vue-leaflet/vue-leaflet";
-import carIconUrl from "../assets/car.png";
+import {LMap, LMarker, LPopup, LTileLayer} from "@vue-leaflet/vue-leaflet";
+import car from "../assets/car.png";
+import person from "../assets/person.png";
 
 export default {
+  props: {
+    cars: Array,
+    customers: Array,
+  },
   components: {
     LMap,
     LTileLayer,
@@ -33,17 +46,18 @@ export default {
   },
   data() {
     return {
-      zoom: 2,
-      markers: [
-        { position: [47.41322, -1.219482], popupText: "Marker 1" },
-        { position: [48.8566, 2.3522], popupText: "Marker 2" },
-        { position: [51.5074, -0.1278], popupText: "Marker 3" },
-      ],
+      zoom: 12,
       carIcon: L.icon({
-        iconUrl: carIconUrl,
-        iconSize: [38, 38],
-        iconAnchor: [19, 38],
-        popupAnchor: [0, -38],
+        iconUrl: car,
+        iconSize: [40, 27],
+        iconAnchor: [20, 13],
+        popupAnchor: [0, -13],
+      }),
+      personIcon: L.icon({
+        iconUrl: person,
+        iconSize: [27, 40],
+        iconAnchor: [13, 40],
+        popupAnchor: [0, -40],
       }),
     };
   },

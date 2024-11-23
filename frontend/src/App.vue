@@ -1,40 +1,48 @@
 <script setup lang="ts">
 
-import { ref } from "vue";
+import {ref} from "vue";
+import FrontPage from "./components/FrontPage.vue";
 import Map from "./components/Map.vue";
 import InteractiveBoard from "./components/InteractiveBoard.vue";
+import CurrentLoad from "./components/graph/CurrentLoad.vue";
 
-const rawInput = ref('');
 const error = ref('');
 
-function start() {
-  const ws = new WebSocket("/ws?scenario_id=" + rawInput.value);
+let cars = ref([
+  {coordX: 40.7128, coordY: -74.0060, id: 'car1'}
+]);
+let customers = ref([]);
+let connected = ref(false);
+let ws: WebSocket | null;
+
+function start(uuid: string) {
+  ws = new WebSocket("/ws?scenario_id=" + uuid);
   ws.onerror = (event) => {
     console.log(event);
     error.value = "Websocket failed, see console";
   };
   ws.onmessage = (event) => {
-    console.log(event.data);
-  };
-  ws.onopen = (event) => {
-    console.log(event);
+    const data = JSON.parse(event.data);
+    cars.value = data.vehicles;
+    customers.value = data.customers;
+    connected.value = true;
   };
 }
+
+const getError = () => error;
 </script>
 
 <template>
-  <div class="main-container">
-    <!-- Left Side -->
+  <div id="error" v-if="!connected && error">{{ error }}</div>
+  <FrontPage :start :error="getError" v-if="!connected"/>
+  <div class="main-container" v-else>
     <div class="left">
-      <InteractiveBoard />
+      <InteractiveBoard/>
+      <CurrentLoad/>
     </div>
 
-    <!-- Separator -->
-    <div class="separator"></div>
-
-    <!-- Right Side -->
     <div class="right">
-      <Map />
+      <Map :cars :customers/>
     </div>
   </div>
 </template>
@@ -49,30 +57,18 @@ function start() {
 
 /* Left section styling */
 .left {
-  flex-basis: 50%; /* Left section takes remaining space */
-  overflow: auto; /* Ensures scrollable content if necessary */
-  padding: 1rem;
-}
-
-/* Separator between sections */
-.separator {
-  width: 2px; /* Set the thickness of the separator */
-  background-color: #ccc; /* Light gray separator */
-  height: 100%; /* Full height separator */
+  flex: 50%; /* Left section takes remaining space */
 }
 
 /* Right section styling */
 .right {
-  flex-basis: 50%; /* Takes exactly half of the screen width */
-  background-color: #f9f9f9; /* Optional background color */
-  padding: 1rem;
-  box-sizing: border-box; /* Ensures padding doesn't add to the width */
+  flex: 50%; /* Takes exactly half of the screen width */
+  border-radius: 15px; /* Add rounded corners */
+  overflow: hidden; /* Ensure content doesn't spill over the rounded corners */
 }
 
 /* Error message styling */
 #error {
   color: red;
 }
-
-@import "https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css";
 </style>

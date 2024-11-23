@@ -47,8 +47,8 @@ fn construct_initial_solution(vehicles:&Vec<Vehicle>, customers:&Vec<Customer>) 
             y_vehicle=vehicle.coord_y;
         } else {
             let last_customer=s.route.get(current_id).unwrap().last().unwrap();
-            x_vehicle=last_customer.destination_x;
-            y_vehicle=last_customer.destination_y;
+            x_vehicle=last_customer.destination_x.unwrap();
+            y_vehicle=last_customer.destination_y.unwrap();
         }
         let mut best = f64::MAX;
         let mut best_idx =0;
@@ -81,10 +81,10 @@ fn test_initial_solution1() {
             is_available: true,
             vehicle_speed: None,
             customer_id: None,
-            remaining_travel_time: 0.0,
-            distance_travelled: 0.0,
-            active_time: 0.0,
-            number_of_trips: 0,
+            remaining_travel_time: Some(0.0),
+            distance_travelled: Some(0.0),
+            active_time: Some(0.0),
+            number_of_trips: Some(0),
         },
         Vehicle{
             id: "v2".to_string(),
@@ -93,10 +93,10 @@ fn test_initial_solution1() {
             is_available: false,
             vehicle_speed: None,
             customer_id: None,
-            remaining_travel_time: 0.0,
-            distance_travelled: 0.0,
-            active_time: 0.0,
-            number_of_trips: 0,
+            remaining_travel_time: Some(0.0),
+            distance_travelled: Some(0.0),
+            active_time: Some(0.0),
+            number_of_trips: Some(0),
         }
     ];
     let customers = vec![
@@ -104,32 +104,32 @@ fn test_initial_solution1() {
             id: "c1".to_string(),
             coord_x: 0.51,
             coord_y: 0.51,
-            destination_x: 0.33,
-            destination_y: -0.20,
+            destination_x: Some(0.33),
+            destination_y: Some(-0.20),
             awaiting_service: false,
         },
         Customer{
             id: "c2".to_string(),
             coord_x: 0.30,
             coord_y: -0.30,
-            destination_x: 0.90,
-            destination_y: 0.90,
+            destination_x: Some(0.90),
+            destination_y: Some(0.90),
             awaiting_service: false,
         },
         Customer{
             id: "c3".to_string(),
             coord_x: 0.0,
             coord_y: 0.0,
-            destination_x: -0.5,
-            destination_y: -0.5,
+            destination_x: Some(-0.5),
+            destination_y: Some(-0.5),
             awaiting_service: false,
         },
         Customer{
             id: "c4".to_string(),
             coord_x: -0.6,
             coord_y: -0.6,
-            destination_x: 0.0,
-            destination_y: 0.0,
+            destination_x: Some(0.0),
+            destination_y: Some(0.0),
             awaiting_service: false,
         }
     ];

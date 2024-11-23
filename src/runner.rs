@@ -2,7 +2,7 @@ use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
 
-use crate::models::{Scenario, UpdateScenario, UpdateScenarioResponse};
+use crate::models::{LaunchScenarioResponse, Scenario, UpdateScenario, UpdateScenarioResponse};
 
 #[derive(Debug, Clone)]
 pub struct RunnerClient {
@@ -33,6 +33,23 @@ impl RunnerClient {
         let response = self
             .client
             .post(&url)
+            .json(body)
+            .send()
+            .await?
+            .json::<R>()
+            .await?;
+        Ok(response)
+    }
+
+    async fn put<B: Serialize, R: for<'de> Deserialize<'de>>(
+        &self,
+        endpoint: &str,
+        body: &B,
+    ) -> Result<R, Box<dyn Error>> {
+        let url = format!("{}/{}", self.base_url, endpoint);
+        let response = self
+            .client
+            .put(&url)
             .json(body)
             .send()
             .await?
@@ -75,13 +92,14 @@ impl RunnerClient {
             .await?;
 
         if let Some(scenario) = resp.scenario {
-            return Ok(scenario)
+            return Ok(scenario);
         }
 
         return Err(match resp.error {
             Some(e) => e,
-            None => "No error from backend, but also no scenario, lol".to_string()
-        }.into());
+            None => "No error from backend, but also no scenario, lol".to_string(),
+        }
+        .into());
     }
 
     /// Assigns vehicles to customers.
@@ -92,7 +110,10 @@ impl RunnerClient {
         update_vehicles: &UpdateScenario,
     ) -> Result<UpdateScenarioResponse, Box<dyn Error>> {
         let scenario: UpdateScenarioResponse = self
-            .post(&format!("/Scenarios/update_scenario/{}", scenario_id), &())
+            .put(
+                &format!("/Scenarios/update_scenario/{}", scenario_id),
+                update_vehicles,
+            )
             .await?;
         Ok(scenario)
     }
@@ -102,19 +123,21 @@ impl RunnerClient {
         &self,
         scenario_id: &str,
         speed: f64,
-    ) -> Result<UpdateScenarioResponse, Box<dyn Error>> {
-        #[derive(Serialize)]
-        struct LaunchScenarioParameters<'a> {
-            speed: f64,
-            scenario_id: &'a str,
-        }
-
-        let scenario: UpdateScenarioResponse = self
-            .post(
-                &format!("/Runner/launch_scenario/{}", scenario_id),
-                &LaunchScenarioParameters { speed, scenario_id },
-            )
+    ) -> Result<LaunchScenarioResponse, Box<dyn Error>> {
+        let response = self
+            .client
+            .post(&format!(
+                "{}/Runner/launch_scenario/{}?speed={}",
+                self.base_url, scenario_id, speed
+            ))
+            .send()
+            .await?
+            .text()
             .await?;
-        Ok(scenario)
+
+        // Deserialize the response body into the expected struct
+        let start: LaunchScenarioResponse = serde_json::from_str(&response)?;
+
+        Ok(start)
     }
 }
