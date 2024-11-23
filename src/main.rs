@@ -1,3 +1,4 @@
+mod backend;
 mod matching;
 mod models;
 mod runner;
@@ -5,6 +6,7 @@ mod runner;
 use core::panic;
 use std::{cmp::min, convert::Infallible, error::Error, net::SocketAddr};
 
+use backend::BackendClient;
 use env_logger::Env;
 use futures_util::{SinkExt, StreamExt};
 use log::{error, info};
@@ -25,6 +27,12 @@ use warp::{
 #[derive(Debug, serde::Deserialize)]
 pub(crate) struct WebSocketParams {
     scenario_id: String,
+}
+#[derive(Debug, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct ScenarioCreationParams {
+    number_of_vehicles: u64,
+    number_of_customers: u64,
 }
 
 /// TODO: Implement the actual assignment algorithm
@@ -61,15 +69,15 @@ pub(crate) async fn scenario_simulator(
     let scenario_id = initial_scenario.id.clone();
     let mut scenario = initial_scenario;
 
-    let initial_assignments = update_scenario_first(&scenario);
-    let update = runner_client
-        .update_scenario(&scenario_id, &initial_assignments)
-        .await?;
-    debug_assert!(
-        initial_assignments.vehicles.len()
-            <= min(scenario.vehicles.len(), scenario.customers.len())
-    );
-    debug_assert!(update.failed_to_update.is_empty());
+    // let initial_assignments = update_scenario_first(&scenario);
+    // let update = runner_client
+    //     .update_scenario(&scenario_id, &initial_assignments)
+    //     .await?;
+    // debug_assert!(
+    //     initial_assignments.vehicles.len()
+    //         <= min(scenario.vehicles.len(), scenario.customers.len())
+    // );
+    // debug_assert!(update.failed_to_update.is_empty());
 
     let scenario_launch = match runner_client.launch_scenario(&scenario_id, 0.2).await {
         Ok(s) => s,
@@ -227,9 +235,35 @@ pub(crate) async fn handle_ws_route(
 
     Ok(response)
 }
-fn with_client(
+
+pub(crate) async fn create_scenario(
+    params: ScenarioCreationParams,
+    backend_client: BackendClient,
+) -> Result<impl Reply, Rejection> {
+    let response = backend_client
+        .create_scenario(params.number_of_vehicles, params.number_of_customers)
+        .await;
+
+    match response {
+        Ok(scenario) => Ok(warp::reply::json(&scenario)),
+        Err(e) => {
+            let custom_error = ErrorMsg {
+                message: format!("Failed to create scenario: {}", e),
+            };
+            Err(warp::reject::custom(custom_error))
+        }
+    }
+}
+
+fn with_runner_client(
     client: RunnerClient,
 ) -> impl Filter<Extract = (RunnerClient,), Error = Infallible> + Clone {
+    warp::any().map(move || client.clone())
+}
+
+fn with_backend_client(
+    client: BackendClient,
+) -> impl Filter<Extract = (BackendClient,), Error = Infallible> + Clone {
     warp::any().map(move || client.clone())
 }
 
@@ -246,13 +280,23 @@ async fn main() {
         std::env::var("RUNNER_BASE_URL").unwrap_or("http://localhost:8090".to_string());
     let runner_client = RunnerClient::new(&runner_base_url);
 
+    let backend_base_url =
+        std::env::var("BACKEND_BASE_URL").unwrap_or("http://localhost:8080".to_string());
+    let backendClient = backend::BackendClient::new(&backend_base_url);
+
+    let create_scenario_route = warp::path!("scenario" / "create")
+        .and(warp::post())
+        .and(warp::query::<ScenarioCreationParams>())
+        .and(with_backend_client(backendClient))
+        .and_then(create_scenario);
+
     let ws_route = warp::path("ws")
         .and(warp::query::<WebSocketParams>())
-        .and(with_client(runner_client))
+        .and(with_runner_client(runner_client))
         .and(warp::ws().map(|ws: warp::ws::Ws| ws.max_frame_size(64 << 20)))
         .and_then(handle_ws_route);
 
-    let routes = ws_route;
+    let routes = ws_route.or(create_scenario_route);
 
     let addr: SocketAddr = ("[::]:".to_owned() + web_server_port.to_string().as_str())
         .parse()
