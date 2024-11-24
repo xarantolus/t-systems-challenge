@@ -35,7 +35,7 @@ pub fn compute_assignment(scenario: &Scenario) -> HashMap<String, VecDeque<Strin
     let optimal = optimize_alns(&v, initial.clone(), 0.95, 50);
     let mut map: HashMap<String, VecDeque<String>> = HashMap::new();
     for (idx, vehicle) in v.iter().enumerate() {
-        let ids: VecDeque<String> = initial.route[idx].iter().map(|x| x.id.to_owned()).collect();
+        let ids: VecDeque<String> = optimal.route[idx].iter().map(|x| x.id.to_owned()).collect();
         map.insert(vehicle.id.clone(), ids);
     }
     map
