@@ -90,7 +90,7 @@ export default {
           let ltt = this.lastTravelTimes[car.id];
           let change = false;
           if (ltt && ltt !== car.activeTime) {
-            console.log('Travel time changed', ltt, car.remainingTravelTime);
+            // console.log('Travel time changed', ltt, car.remainingTravelTime);
             change = true;
           }
 
@@ -101,7 +101,7 @@ export default {
             if (isNaN(progress)) {
               throw new Error('Progress is NaN');
             }
-            console.log('to customer progress', progress);
+            // console.log('to customer progress', progress);
 
             // Interpolating between car and customer destination
             outputs.push({
@@ -118,7 +118,7 @@ export default {
             if (isNaN(travelProgress)) {
               throw new Error('Travel progress is NaN');
             }
-            console.log('to destination progress', travelProgress);
+            // console.log('to destination progress', travelProgress);
             movingCustomers.add(customer.id);
 
             // Interpolating between car and customer
