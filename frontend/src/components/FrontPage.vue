@@ -56,7 +56,7 @@ export default {
     <!-- Set Speed box centered at the top -->
     <div class="top-box">
       <div class="box">
-        <h3 class="title is-3">Set Speed And Algorythm</h3>
+        <h3 class="title is-3">Set Speed and Algorithm</h3>
         <div class="input-button-container">
           <input class="input is-rounded" type="number" placeholder="Speed" v-model="speed" />
         </div>

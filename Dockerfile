@@ -12,8 +12,8 @@ RUN cargo fetch
 COPY . ./
 RUN cargo build --release
 
-FROM alpine:latest
-RUN apk add --no-cache libc6-compat
+FROM debian:latest
+RUN apt-get update && apt-get install -y libc6
 WORKDIR /app
 
 COPY --from=frontend-builder /app/frontend/dist /app/frontend/dist

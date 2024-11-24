@@ -178,7 +178,7 @@ pub(crate) async fn scenario_simulator(
         };
 
         // TODO: Maybe not?
-        sleep(std::time::Duration::from_millis(100)).await;
+        // sleep(std::time::Duration::from_millis(100)).await;
     }
 
     Ok(())

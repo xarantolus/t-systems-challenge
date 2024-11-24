@@ -6,6 +6,7 @@ services:
     restart: no
     depends_on:
       - postgres
+
   scenariorunner:
     image: mikechatzis/hackatumtsichallenge:scenariorunner
     ports:
@@ -15,6 +16,7 @@ services:
       - backend
       - frontend
       - postgres
+
   postgres:
     image: postgres:13-alpine
     hostname: postgres
@@ -25,6 +27,7 @@ services:
     ports:
       - "5432:5432"
     restart: no
+
   frontend:
     image: mikechatzis/hackatumtsichallenge:frontend
     ports:
@@ -33,14 +36,29 @@ services:
     depends_on:
       - backend
 
-  # our_server:
-  #   build: .
-  #   ports:
-  #     - "5000:5000"
-  #   restart: always
-  #   depends_on:
-  #     - backend
+  our_server:
+    build: .
+    ports:
+      - "5000:5000"
+    restart: always
+    depends_on:
+      - backend
 
+  caddy:
+    image: caddy:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - our_server
+
+volumes:
+  caddy_data:
+  caddy_config:
 
 networks:
   default:

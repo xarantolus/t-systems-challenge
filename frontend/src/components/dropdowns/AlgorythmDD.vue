@@ -29,7 +29,7 @@ function handleItemClick(text: string) {
     <!-- Dropdown Trigger -->
     <div class="dropdown-trigger">
       <button class="button" aria-haspopup="true" aria-controls="dropdown-menu" @click="toggleDropdown">
-        <span>{{ activeItem ? activeItem : 'Select algorythm' }}</span>
+        <span>{{ activeItem ? activeItem : 'Select algorithm' }}</span>
         <span class="icon is-small">
           <i class="fas fa-angle-down" aria-hidden="true"></i>
         </span>
