@@ -14,7 +14,8 @@ RUN cargo build --release
 
 WORKDIR /app/rust
 
-COPY --from=frontend-builder /app/frontend/dist /app/frontend/dist
+COPY --from=frontend-builder /app/frontend/dist /app/rust/target/release/frontend/dist
 RUN cp -f /app/rust/target/release/t-systems-challenge /app/t-systems-challenge
 
+WORKDIR /app/rust/target/release
 ENTRYPOINT ["/app/rust/target/release/t-systems-challenge"]
