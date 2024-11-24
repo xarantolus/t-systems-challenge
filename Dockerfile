@@ -12,11 +12,9 @@ RUN cargo fetch
 COPY . ./
 RUN cargo build --release
 
-FROM debian:latest
-RUN apt-get update && apt-get install -y libc6
-WORKDIR /app
+WORKDIR /app/rust
 
 COPY --from=frontend-builder /app/frontend/dist /app/frontend/dist
-COPY --from=rust-builder /app/rust/target/release/t-systems-challenge /app/t-systems-challenge
+RUN cp -f /app/rust/target/release/t-systems-challenge /app/t-systems-challenge
 
-ENTRYPOINT ["/app/t-systems-challenge"]
+ENTRYPOINT ["/app/rust/target/release/t-systems-challenge"]
