@@ -1,0 +1,6 @@
+hackatum.net {
+  reverse_proxy our_server:5000
+  tls {
+    dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+  }
+}
