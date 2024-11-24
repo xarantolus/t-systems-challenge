@@ -1,9 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 
-const props = defineProps({
-  isActive: Boolean
-})
 
 // Declare a reactive variable for dropdown state (active/inactive)
 const isActive = ref(false);

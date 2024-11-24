@@ -2,8 +2,6 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { Line } from 'vue-chartjs';
 import { Chart as ChartJS, Title, Tooltip, LineElement, PointElement, LinearScale, CategoryScale } from 'chart.js';
-import ConditionDD from "../dropdowns/ConditionDD.vue";
-import FilterDD from "../dropdowns/FilterDD.vue";
 
 // Register required Chart.js components
 ChartJS.register(Title, Tooltip, LineElement, PointElement, LinearScale, CategoryScale);
@@ -11,7 +9,6 @@ ChartJS.register(Title, Tooltip, LineElement, PointElement, LinearScale, Categor
 // Reactive variable to hold data
 const loadData = ref<number[]>([0, 1, 2, 3, 4, 5]);
 const timeLabels = ref<string[]>(['0s', '1s', '2s', '3s', '4s', '5s']);
-const currentLoad = ref(0);
 
 // Chart data configuration
 const chartData = ref({
