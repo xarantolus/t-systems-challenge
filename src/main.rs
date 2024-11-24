@@ -1,7 +1,7 @@
 use core::panic;
-use std::{cmp::min, convert::Infallible, error::Error, net::SocketAddr};
 use std::cmp::PartialEq;
 use std::collections::{HashMap, VecDeque};
+use std::{cmp::min, convert::Infallible, error::Error, net::SocketAddr};
 
 use env_logger::Env;
 use futures_util::{SinkExt, StreamExt};
@@ -12,10 +12,10 @@ use tokio::{
     time::sleep,
 };
 use warp::{
-    Filter,
     filters::ws::{Message, WebSocket},
     reject::Rejection,
     reply::Reply,
+    Filter,
 };
 
 use backend::BackendClient;
@@ -76,14 +76,14 @@ pub fn update_scenario_first(scenario: &Scenario) -> UpdateScenario {
             continue;
         }
 
-        let vehicle = available_vehicles
-            .iter()
-            .min_by_key(|v| {
-                let dx = v.coord_x - customer.coord_x;
-                let dy = v.coord_y - customer.coord_y;
-                (dx * dx + dy * dy).abs() as u64
-            });
-        let Some(vehicle) = vehicle else { break; };
+        let vehicle = available_vehicles.iter().min_by_key(|v| {
+            let dx = v.coord_x - customer.coord_x;
+            let dy = v.coord_y - customer.coord_y;
+            (dx * dx + dy * dy).abs() as u64
+        });
+        let Some(vehicle) = vehicle else {
+            break;
+        };
 
         vehicle_assignments.push(UpdateVehicle {
             id: vehicle.id.clone(),

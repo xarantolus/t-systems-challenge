@@ -32,7 +32,7 @@ pub fn compute_assignment(scenario: &Scenario) -> HashMap<String, VecDeque<Strin
         .map(|x| x.to_owned())
         .collect();
     let initial = construct_initial_solution(&v, &c);
-    //let optimal = optimize_alns(initial,0.95);
+    let optimal = optimize_alns(&v, initial.clone(), 0.95, 50);
     let mut map: HashMap<String, VecDeque<String>> = HashMap::new();
     for (idx, vehicle) in v.iter().enumerate() {
         let ids: VecDeque<String> = initial.route[idx].iter().map(|x| x.id.to_owned()).collect();
@@ -41,8 +41,19 @@ pub fn compute_assignment(scenario: &Scenario) -> HashMap<String, VecDeque<Strin
     map
 }
 
-fn optimize_alns(initial: Solution, cooling_factor: f64, max_iterations: i32) -> Solution {
+fn optimize_alns(
+    vehicles: &Vec<Vehicle>,
+    initial: Solution,
+    cooling_factor: f64,
+    max_iterations: i32,
+) -> Solution {
     const REMOVAL_FACTOR: f64 = 0.2;
+    let insert_heuristics: Vec<fn(&Vec<Vehicle>, &mut Solution, Vec<Customer>)> = vec![
+        insert::greedy,
+        insert::greedy,
+        insert::greedy,
+        insert::greedy,
+    ];
     let insert_weights = vec![1.0, 1.0, 1.0, 1.0];
     let remove_heuristics: Vec<
         fn(&Solution, fn(f64, f64, f64, f64) -> f64, q: usize) -> Vec<(usize, usize)>,
@@ -59,11 +70,17 @@ fn optimize_alns(initial: Solution, cooling_factor: f64, max_iterations: i32) ->
         let removal = select_heuristic(&remove_weights);
         let indexes: Vec<(usize, usize)> = remove_heuristics[removal](&current, COST_FUNCTION, q);
         let mut removed: Vec<Customer> = vec![];
-        for (i, j) in indexes {
-            removed.push(current.route[i][j].clone());
-            current.route.get_mut(i).unwrap().remove(j);
+        let mut offsets = vec![];
+        for idx in 0..indexes.len() {
+            offsets.push(0);
         }
-        break;
+        for (i, j) in indexes {
+            removed.push(current.route[i][j - offsets[i]].clone());
+            current.route.get_mut(i).unwrap().remove(j - offsets[i]);
+            offsets[i] += 1;
+        }
+        let insert = select_heuristic(&insert_weights);
+        insert_heuristics[insert](&vehicles, &mut current, removed);
     }
     initial
 }

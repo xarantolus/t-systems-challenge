@@ -7,7 +7,7 @@ impl Metric for StraightLineDistance {
     fn calculate(lat_source: f64, lon_source: f64, lat_dest: f64, lon_dest: f64) -> f64 {
         let lat1_rad = degrees_to_radians(lat_source);
         let lon1_rad = degrees_to_radians(lon_source);
-        let lat2_rad = degrees_to_radians(lat_source);
+        let lat2_rad = degrees_to_radians(lat_dest);
         let lon2_rad = degrees_to_radians(lon_dest);
 
         let delta_lat = lat2_rad - lat1_rad;
